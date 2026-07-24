@@ -53,6 +53,47 @@ def _write_model_record(path: Path, name: str) -> None:
         temporary.unlink(missing_ok=True)
 
 
+def _promote_model_transactionally(incoming: Path, destination: Path, name: str) -> Path:
+    """Promove modelo e sidecar como um conjunto, restaurando o anterior em falha."""
+    token = uuid.uuid4().hex
+    incoming_record = incoming.with_suffix(".sha256.json")
+    destination_record = destination.with_suffix(".sha256.json")
+    backup_model = destination.with_name(f".{destination.name}.{token}.bak")
+    backup_record = destination_record.with_name(f".{destination_record.name}.{token}.bak")
+
+    had_model = destination.exists()
+    had_record = destination_record.exists()
+    try:
+        if had_model:
+            destination.replace(backup_model)
+        if had_record:
+            destination_record.replace(backup_record)
+
+        incoming.replace(destination)
+        incoming_record.replace(destination_record)
+        validated = validate_model_file(
+            destination,
+            name,
+            require_trusted_record=True,
+        )
+        backup_model.unlink(missing_ok=True)
+        backup_record.unlink(missing_ok=True)
+        return validated
+    except Exception:
+        destination.unlink(missing_ok=True)
+        destination_record.unlink(missing_ok=True)
+        if backup_model.exists():
+            backup_model.replace(destination)
+        if backup_record.exists():
+            backup_record.replace(destination_record)
+        raise
+    finally:
+        incoming.unlink(missing_ok=True)
+        incoming_record.unlink(missing_ok=True)
+        backup_model.unlink(missing_ok=True)
+        backup_record.unlink(missing_ok=True)
+
+
 def download_model(
     name: str,
     directory: Path | None = None,
@@ -69,30 +110,43 @@ def download_model(
     destination = target_dir / model_filename(normalized)
     if destination.exists() and not force:
         try:
-            return validate_model_file(destination, normalized)
+            return validate_model_file(
+                destination,
+                normalized,
+                require_trusted_record=True,
+            )
         except ValueError:
-            # Mantém o arquivo anterior até o novo download ser totalmente validado.
+            # Mantém o arquivo anterior até o novo conjunto ser validado e promovido.
             pass
+
     required = spec.size_bytes + MODEL_DISK_MARGIN_BYTES
     if shutil.disk_usage(target_dir).free < required:
         raise OSError(
             f"Espaço livre insuficiente. São necessários ao menos {required / 1024**2:.0f} MiB."
         )
-    result = download_verified_file(
-        url=spec.url,
-        sha256=spec.sha256,
-        size_bytes=spec.size_bytes,
-        destination=destination,
-        allowed_hosts=manifest.allowed_download_hosts,
-        cancel_event=cancel_event,
-        progress=progress,
-    )
+
+    token = uuid.uuid4().hex
+    incoming = target_dir / f".{destination.name}.{token}.incoming"
     try:
+        result = download_verified_file(
+            url=spec.url,
+            sha256=spec.sha256,
+            size_bytes=spec.size_bytes,
+            destination=incoming,
+            allowed_hosts=manifest.allowed_download_hosts,
+            cancel_event=cancel_event,
+            progress=progress,
+        )
         _write_model_record(result, normalized)
-        return validate_model_file(result, normalized)
+        validate_model_file(
+            result,
+            normalized,
+            require_trusted_record=True,
+        )
+        return _promote_model_transactionally(result, destination, normalized)
     except Exception:
-        result.unlink(missing_ok=True)
-        result.with_suffix(".sha256.json").unlink(missing_ok=True)
+        incoming.unlink(missing_ok=True)
+        incoming.with_suffix(".sha256.json").unlink(missing_ok=True)
         raise
 
 
