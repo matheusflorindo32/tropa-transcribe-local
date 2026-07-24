@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import hashlib
+import json
 import threading
 from pathlib import Path
 from types import MappingProxyType, SimpleNamespace
@@ -36,6 +37,7 @@ def _patch_manifest(
         allowed_download_hosts=frozenset({"huggingface.co"}),
     )
     monkeypatch.setattr("app.services.model_download.load_runtime_manifest", lambda: manifest)
+    monkeypatch.setattr("app.services.runtime_manifest.load_runtime_manifest", lambda: manifest)
     monkeypatch.setattr("app.services.runtime_manifest.model_spec", lambda _name: spec)
     monkeypatch.setattr("app.services.models.minimum_model_bytes", lambda _: 1)
     monkeypatch.setattr("app.services.model_download.MODEL_DISK_MARGIN_BYTES", 0)
@@ -62,6 +64,7 @@ def test_download_validates_hash_and_is_atomic(
     assert result.read_bytes() == content
     assert result.with_suffix(".sha256.json").is_file()
     assert not list(tmp_path.glob("*.part"))
+    assert not list(tmp_path.glob("*.incoming"))
 
 
 def test_download_cancel_removes_partial(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
@@ -96,6 +99,41 @@ def test_corrupt_existing_model_is_repaired_atomically(
 
     monkeypatch.setattr("app.services.model_download.download_verified_file", fake_download)
     assert download_model("base", tmp_path).read_bytes() == content
+
+
+def test_repair_restores_previous_model_when_sidecar_write_fails(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    new_content = b"trusted-model"
+    old_content = b"previous-model"
+    _patch_manifest(monkeypatch, new_content)
+    destination = tmp_path / "ggml-base.bin"
+    record = destination.with_suffix(".sha256.json")
+    destination.write_bytes(old_content)
+    record.write_text(
+        json.dumps({"schema_version": 1, "sha256": hashlib.sha256(old_content).hexdigest()}),
+        encoding="utf-8",
+    )
+
+    def fake_download(**kwargs: object) -> Path:
+        path = kwargs["destination"]
+        assert isinstance(path, Path)
+        path.write_bytes(new_content)
+        return path
+
+    def fail_record(_path: Path, _name: str) -> None:
+        raise OSError("falha controlada no sidecar")
+
+    monkeypatch.setattr("app.services.model_download.download_verified_file", fake_download)
+    monkeypatch.setattr("app.services.model_download._write_model_record", fail_record)
+
+    with pytest.raises(OSError, match="falha controlada"):
+        download_model("base", tmp_path, force=True)
+
+    assert destination.read_bytes() == old_content
+    assert record.is_file()
+    assert not list(tmp_path.glob("*.incoming"))
+    assert not list(tmp_path.glob("*.bak"))
 
 
 def test_download_rejects_low_disk(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
