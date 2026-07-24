@@ -23,7 +23,7 @@ from PySide6.QtWidgets import (
 )
 
 from app.config import load_config
-from app.services.models import MODEL_CATALOG
+from app.services.models import MODEL_CATALOG, default_models_dir, model_filename
 from app.transcription.engine import TranscriptionEngine, TranscriptionRequest
 from app.transcription.validators import SUPPORTED_EXTENSIONS
 from app.ui.workers import TranscriptionWorker
@@ -73,7 +73,12 @@ class MainWindow(QMainWindow):
         self.model = QComboBox()
         self.model.addItems(MODEL_CATALOG)
         self.model.setCurrentText(config.model)
+        self.model.currentTextChanged.connect(self._update_model_info)
         form.addRow("Modelo:", self.model)
+        self.model_info = QLabel()
+        self.model_info.setWordWrap(True)
+        self.model_info.setAccessibleName("Detalhes e disponibilidade do modelo")
+        form.addRow("Detalhes:", self.model_info)
         self.language = QComboBox()
         self.language.setEditable(True)
         self.language.addItems(["pt", "auto", "en", "es"])
@@ -118,6 +123,18 @@ class MainWindow(QMainWindow):
         actions.addWidget(open_button)
         layout.addLayout(actions)
         self.setCentralWidget(root)
+        self._update_model_info(self.model.currentText())
+
+    def _update_model_info(self, name: str) -> None:
+        info = MODEL_CATALOG[name]
+        downloaded = (default_models_dir() / model_filename(name)).is_file()
+        status = "baixado" if downloaded else "não baixado"
+        language = "multilíngue; recomendado para pt-BR" if info.multilingual else "somente inglês"
+        self.model_info.setText(
+            f"{info.disk} em disco · {info.memory} de memória · velocidade {info.speed} · "
+            f"qualidade {info.quality} · {language} · {status}. "
+            "O desempenho varia conforme o computador."
+        )
 
     def _add_paths(self, paths: list[str]) -> None:
         known = {self.files.item(index).text() for index in range(self.files.count())}
