@@ -18,6 +18,9 @@ dependências ou publicar binários.
 - [Python no Windows](https://docs.python.org/3.12/using/windows.html) e
   [venv](https://docs.python.org/3.12/tutorial/venv.html).
 - [CMake](https://cmake.org/cmake/help/latest/guide/user-interaction/index.html).
+- [Gerador Visual Studio 17 2022](https://cmake.org/cmake/help/latest/generator/Visual%20Studio%2017%202022.html).
+- [vswhere](https://github.com/microsoft/vswhere/wiki/Installing) e
+  [Developer Command Prompt](https://learn.microsoft.com/visualstudio/ide/reference/command-prompt-powershell?view=vs-2022).
 - [GitHub Actions](https://docs.github.com/en/actions/reference/workflows-and-actions)
   e [permissões](https://docs.github.com/en/actions/reference/workflows-and-actions/workflow-syntax).
 - [Qt for Python](https://doc.qt.io/qtforpython-6/), sua
@@ -25,6 +28,8 @@ dependências ou publicar binários.
   [deployment](https://doc.qt.io/qtforpython-6.8/deployment/index.html).
 - [PyInstaller](https://pyinstaller.org/en/stable/) e
   [licença](https://pyinstaller.org/en/stable/license.html).
+- [Compilador Inno Setup](https://jrsoftware.org/ishelp/topic_compilercmdline.htm)
+  e [documentação](https://jrsoftware.org/ishelp/contents.htm).
 - [Nuitka](https://nuitka.net/user-documentation/user-manual.html) e
   [download/licença](https://nuitka.net/doc/download.html).
 

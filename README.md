@@ -6,6 +6,9 @@ Transcrição local e privada de áudio e vídeo, com foco inicial em português
 brasileiro. O projeto integra FFmpeg e whisper.cpp, oferece CLI, interface
 gráfica opcional e materiais do curso livre da Tropa Científica.
 
+Versão atual: **0.2.0-beta**. Esta beta estabiliza o fluxo Windows; não há
+binário oficial publicado.
+
 > **Aviso de precisão:** A transcrição é gerada automaticamente e pode conter
 > erros. Revise nomes, números, termos técnicos e informações críticas antes de
 > utilizar ou publicar o conteúdo.
@@ -53,12 +56,14 @@ Abra o PowerShell na raiz do repositório:
 
 ```powershell
 Set-ExecutionPolicy -Scope Process RemoteSigned
-.\scripts\windows\instalar.ps1 -Model base
+.\scripts\windows\instalar.ps1 -Model small
 .\scripts\windows\verificar.ps1
 ```
 
 O script não instala ferramentas globais, não solicita credenciais e não
 desativa proteções. Se faltar uma dependência, ele para e apresenta orientação.
+Visual Studio Build Tools 2022 é localizado automaticamente, e o instalador
+aceita ser executado novamente sem duplicar o download de um modelo íntegro.
 Guia completo: [`docs/instalacao-windows.md`](docs/instalacao-windows.md).
 
 Para desenvolvimento:
@@ -72,7 +77,8 @@ python -m pip install -e ".[dev,gui]"
 ## Uso
 
 ```powershell
-tropa-transcribe "audio.ogg"
+.\scripts\windows\transcrever.ps1 "C:\Midias\audio autorizado.ogg"
+tropa-transcribe "C:\Midias\audio.ogg"
 tropa-transcribe "video.mp4" --model small
 tropa-transcribe "entrevista.wav" --language pt
 tropa-transcribe "pasta" --batch
@@ -117,7 +123,8 @@ python tools\download_model.py base
 ```
 
 O downloader restringe nomes e origem, grava de modo atômico, calcula SHA-256
-e valida o ETag SHA-256 quando o servidor LFS o fornece.
+e valida o ETag SHA-256 quando o servidor LFS o fornece. Também rejeita arquivos
+menores que o tamanho mínimo plausível de cada modelo.
 
 ## Privacidade, segurança e limitações
 
@@ -144,6 +151,14 @@ python tools\check_environment.py
 ```
 
 Consulte [`docs/solucao-de-problemas.md`](docs/solucao-de-problemas.md).
+Para repetir o teste real:
+
+```powershell
+.\tests\integration\windows-real-smoke.ps1 -Model small
+```
+
+Veja [`docs/validacao-windows-real.md`](docs/validacao-windows-real.md) e o
+[`checklist de Windows limpo`](docs/checklist-windows-limpo.md).
 
 ## Curso Tropa Científica
 

@@ -2,7 +2,7 @@
 
 ## Versões
 
-A versão `0.1.x` está em desenvolvimento. Não é adequada, sem avaliação
+A versão `0.2.0-beta` está em desenvolvimento. Não é adequada, sem avaliação
 institucional adicional, para fluxo pericial, clínico, sigiloso ou crítico.
 
 ## Relato responsável
