@@ -2,6 +2,13 @@
 
 Data: 2026-07-24.
 
+> **Evidência supersedida após correções de segurança:** os números de build e
+> hashes abaixo pertencem a uma revisão anterior ao endurecimento da integridade
+> de modelos, rollback transacional e sincronização do wizard. Eles permanecem
+> apenas como histórico técnico e **não podem ser usados para publicação**. Um
+> novo build completo, com novos hashes, transcrição pelo EXE, instalação,
+> desinstalação e Defender, é obrigatório no commit final do PR #3.
+
 ## Ambiente desta execução
 
 - host Windows x64 build `26200`, 16 GiB RAM;
@@ -48,7 +55,7 @@ A cobertura inclui download atômico, cancelamento/limpeza, manifesto adulterado
 URL insegura, redirecionamento não permitido, hash incorreto, traversal,
 symlink, arquivo inesperado/DLL planting, pouco espaço e diagnóstico sem shell.
 
-## Build e instalador local
+## Build e instalador local — histórico supersedido
 
 - PyInstaller `6.21.0`, Python `3.11.15`, PySide6/Qt `6.11.1`;
 - bundle `onedir`: 174 arquivos, 118.562.281 bytes;
@@ -69,7 +76,7 @@ O compilador Inno Setup 7.0.2 exibe `Non-commercial use only`. Uso comercial
 exige licenciamento adequado do Inno Setup ou reavaliação da ferramenta antes
 da distribuição.
 
-## Transcrição real pelo EXE empacotado
+## Transcrição real pelo EXE empacotado — histórico supersedido
 
 Teste local aprovado com voz sintética do Windows:
 
@@ -82,7 +89,10 @@ As quatro saídas foram criadas e não vazias. O TXT resultou em:
 `Este é um teste de transcrição local e privada.` O teste usa
 `tests/integration/packaged-exe-smoke.ps1`.
 
-## Defender
+Esse resultado deve ser repetido após as correções atuais; até lá, não constitui
+evidência do commit final.
+
+## Defender — histórico supersedido
 
 - antivírus e proteção em tempo real: ativos;
 - definição: `1.455.328.0`;
@@ -91,13 +101,18 @@ As quatro saídas foram criadas e não vazias. O TXT resultou em:
 - SmartScreen: não testado;
 - Authenticode: ausente.
 
+Os scans devem ser repetidos no bundle e instalador reconstruídos.
+
 ## Itens ainda obrigatórios em VM limpa
 
+- executar novamente testes, lint, mypy e auditorias no commit final;
+- reconstruir bundle e instalador e registrar novos tamanhos e SHA-256;
+- repetir transcrição OGG/Opus pelo EXE para TXT/SRT/VTT/JSON;
+- repetir instalação, desinstalação e Microsoft Defender;
 - instalar e abrir pelo instalador sem Python/toolchain;
 - concluir o assistente e modelo `small`;
-- transcrever OGG/Opus pelo EXE instalado para TXT/SRT/VTT/JSON;
 - validar cancelamento, reparo, proxy, interrupção e pouco disco;
 - revisar UX/acessibilidade;
-- executar Microsoft Defender e registrar SmartScreen;
+- registrar SmartScreen;
 - testar atualização e desinstalação;
 - obter/revisar assinatura Authenticode antes de qualquer publicação.
