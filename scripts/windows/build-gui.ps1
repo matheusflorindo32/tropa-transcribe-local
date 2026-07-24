@@ -61,10 +61,32 @@ try {
         if (-not $iscc) {
             throw "ISCC.exe não encontrado. Instale Inno Setup 7 e tente novamente."
         }
+        $innoRegistry = Get-ItemProperty `
+            "HKCU:\Software\Microsoft\Windows\CurrentVersion\Uninstall\Inno Setup 7_is1" `
+            -ErrorAction SilentlyContinue
+        $isccVersion = if ($innoRegistry.DisplayVersion) {
+            $innoRegistry.DisplayVersion
+        } else {
+            (Get-Item -LiteralPath $iscc).VersionInfo.ProductVersion
+        }
+        if (-not $isccVersion -or ([version]$isccVersion -lt [version]"7.0.2")) {
+            throw "Inno Setup 7.0.2 ou superior é obrigatório; encontrado: $isccVersion"
+        }
+        Write-Host "Inno Setup validado:" $isccVersion "-" $iscc
         Invoke-CheckedNative -FilePath $iscc -ArgumentList @(
             (Join-Path $ProjectRoot "packaging\windows\installer.iss")
         ) -Activity "Compilação do instalador Inno Setup"
-        Write-Host "Instalador criado apenas para validação local em dist\installer."
+        $installer = Join-Path $ProjectRoot `
+            "dist\installer\TropaTranscribeLocal-0.3.1-alpha-setup.exe"
+        if (-not (Test-Path -LiteralPath $installer -PathType Leaf)) {
+            throw "ISCC terminou sem produzir o instalador experimental esperado."
+        }
+        $installerHash = (Get-FileHash -LiteralPath $installer -Algorithm SHA256).Hash
+        $installerSignature = (Get-AuthenticodeSignature -LiteralPath $installer).Status
+        Write-Host "Instalador experimental local:" $installer
+        Write-Host "SHA-256:" $installerHash
+        Write-Host "Assinatura Authenticode:" $installerSignature `
+            "(esperado NotSigned nesta fase; não publicar)."
     } else {
         Write-Host "Inno Setup não executado. Use -BuildInstaller somente para validação local."
     }
