@@ -43,7 +43,11 @@ def needs_first_run(model: str = "small") -> bool:
     if not all(is_component_ready(name) for name in ("ffmpeg", "whisper_cpp")):
         return True
     try:
-        validate_model_file(default_models_dir() / model_filename(model), model)
+        validate_model_file(
+            default_models_dir() / model_filename(model),
+            model,
+            require_trusted_record=True,
+        )
         return False
     except (FileNotFoundError, OSError, ValueError):
         return True
@@ -110,7 +114,7 @@ class ProvisioningWorker(QObject):
 
 
 class ConsentPage(QWizardPage):
-    def __init__(self) -> None:
+    def __init__(self, selected_model: str = "small") -> None:
         super().__init__()
         self.setTitle("Plano local e licenças")
         layout = QVBoxLayout(self)
@@ -123,7 +127,7 @@ class ConsentPage(QWizardPage):
         form = QFormLayout()
         self.model = QComboBox()
         self.model.addItems(MODEL_CATALOG)
-        self.model.setCurrentText("small")
+        self.model.setCurrentText(selected_model if selected_model in MODEL_CATALOG else "small")
         self.model.currentTextChanged.connect(self._refresh)
         form.addRow("Modelo:", self.model)
         self.storage = QLabel()
@@ -224,7 +228,11 @@ class SuccessPage(QWizardPage):
 
 
 class FirstRunWizard(QWizard):
-    def __init__(self, parent: object | None = None) -> None:
+    def __init__(
+        self,
+        parent: object | None = None,
+        selected_model: str | None = None,
+    ) -> None:
         super().__init__(parent)  # type: ignore[arg-type]
         self.setWindowTitle("Configurar Tropa Transcribe Local")
         self.resize(760, 560)
@@ -233,6 +241,13 @@ class FirstRunWizard(QWizard):
         self.worker: ProvisioningWorker | None = None
         self.provisioned = False
         self.cancel_pending = False
+
+        parent_model = getattr(parent, "model", None)
+        parent_current_text = getattr(parent_model, "currentText", None)
+        inherited_model = parent_current_text() if callable(parent_current_text) else None
+        initial_model = selected_model or inherited_model or "small"
+        if initial_model not in MODEL_CATALOG:
+            initial_model = "small"
 
         welcome = QWizardPage()
         welcome.setTitle("Tudo pronto para uma configuração privada")
@@ -249,11 +264,21 @@ class FirstRunWizard(QWizard):
         welcome_layout.addWidget(welcome_text)
         self.addPage(welcome)
 
-        self.consent = ConsentPage()
+        self.consent = ConsentPage(initial_model)
         self.addPage(self.consent)
         self.install_page = InstallPage(self)
         self.addPage(self.install_page)
         self.addPage(SuccessPage())
+
+    def selected_model(self) -> str:
+        return self.consent.model.currentText()
+
+    def _synchronize_parent_model(self) -> None:
+        parent = self.parent()
+        parent_model = getattr(parent, "model", None)
+        set_current_text = getattr(parent_model, "setCurrentText", None)
+        if callable(set_current_text):
+            set_current_text(self.selected_model())
 
     @Slot()
     def start_provisioning(self) -> None:
@@ -265,7 +290,7 @@ class FirstRunWizard(QWizard):
         self.install_page.status.setText("Preparando downloads seguros...")
         self.thread = QThread(self)
         self.worker = ProvisioningWorker(
-            self.consent.model.currentText(),
+            self.selected_model(),
             self.consent.repair.isChecked(),
         )
         self.worker.moveToThread(self.thread)
@@ -289,6 +314,7 @@ class FirstRunWizard(QWizard):
     @Slot()
     def _completed(self) -> None:
         self.provisioned = True
+        self._synchronize_parent_model()
         self.install_page.status.setText("Preparação concluída com integridade verificada.")
         self.install_page.completeChanged.emit()
 
