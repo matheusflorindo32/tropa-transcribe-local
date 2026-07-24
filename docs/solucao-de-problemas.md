@@ -17,7 +17,9 @@ Rode `.\scripts\windows\verificar.ps1`. Confira
 python tools\download_model.py base
 ```
 
-Ou passe `--model-path`. Arquivo menor que 1 KiB é rejeitado.
+Ou passe `--model-path`. O tamanho mínimo depende do modelo; por exemplo, um
+`small` muito abaixo de 430 MiB é rejeitado. Se existir registro local de
+SHA-256, ele também precisa corresponder.
 
 ## Codec inválido
 

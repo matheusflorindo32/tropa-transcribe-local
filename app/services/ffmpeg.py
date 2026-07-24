@@ -2,10 +2,13 @@
 
 from __future__ import annotations
 
+import json
 import shutil
 import subprocess
 import threading
 from pathlib import Path
+
+from app.config import default_data_dir
 
 
 class FFmpegError(RuntimeError):
@@ -15,6 +18,16 @@ class FFmpegError(RuntimeError):
 def resolve_ffmpeg(candidate: str | Path = "ffmpeg") -> Path:
     value = str(candidate)
     resolved = shutil.which(value) if Path(value).name == value else value
+    if not resolved and value == "ffmpeg":
+        manifest_path = default_data_dir() / "installation.json"
+        if manifest_path.is_file():
+            try:
+                payload = json.loads(manifest_path.read_text(encoding="utf-8-sig"))
+                manifest_ffmpeg = payload.get("ffmpeg")
+                if isinstance(manifest_ffmpeg, str) and Path(manifest_ffmpeg).is_file():
+                    resolved = manifest_ffmpeg
+            except (OSError, json.JSONDecodeError):
+                pass
     if not resolved or not Path(resolved).is_file():
         raise FileNotFoundError("FFmpeg não encontrado. Execute scripts/windows/verificar.ps1.")
     return Path(resolved).resolve()

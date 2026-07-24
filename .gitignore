@@ -25,6 +25,6 @@ logs/
 .env.*
 !.env.example
 *.spec
-!packaging/*.spec
+!packaging/**/*.spec
 .DS_Store
 Thumbs.db

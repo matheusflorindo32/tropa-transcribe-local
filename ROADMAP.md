@@ -8,7 +8,17 @@ Scripts, CLI, Windows, TXT/SRT/VTT, documentação e curso-base.
 
 ## 0.2
 
-GUI amadurecida, lote, gerenciador de modelos, logs e instalador.
+### 0.2.0-beta
+
+Estabilização Windows: instalação idempotente, Visual Studio automático,
+integridade de modelos, descoberta do executável, smoke real e preparação do
+empacotamento. Release de código-fonte; binários permanecem bloqueados.
+
+### 0.2 estável
+
+Executar checklist em Windows limpo, validar GUI acessível, SBOM, assinatura,
+antivírus e licenças antes de publicar instalador. Amadurecer gerenciador de
+modelos e logs.
 
 ## 0.3
 

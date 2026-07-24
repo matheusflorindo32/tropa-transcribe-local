@@ -2,11 +2,13 @@
 
 from __future__ import annotations
 
+import json
 import shutil
 import subprocess
 import threading
 from pathlib import Path
 
+from app.config import default_data_dir
 from app.transcription.formats import output_flags
 
 
@@ -14,9 +16,29 @@ class WhisperCppError(RuntimeError):
     """Falha controlada do mecanismo."""
 
 
+def _installed_whisper_candidates() -> list[Path]:
+    install_root = default_data_dir()
+    candidates: list[Path] = []
+    manifest_path = install_root / "installation.json"
+    if manifest_path.is_file():
+        try:
+            payload = json.loads(manifest_path.read_text(encoding="utf-8-sig"))
+            manifest_cli = payload.get("whisper_cli")
+            if isinstance(manifest_cli, str):
+                candidates.append(Path(manifest_cli))
+        except (OSError, json.JSONDecodeError):
+            pass
+    build_root = install_root / "runtime" / "whisper.cpp" / "build" / "bin"
+    candidates.extend((build_root / "Release" / "whisper-cli.exe", build_root / "whisper-cli.exe"))
+    return candidates
+
+
 def resolve_whisper_cli(candidate: str | Path = "whisper-cli") -> Path:
     value = str(candidate)
     resolved = shutil.which(value) if Path(value).name == value else value
+    if not resolved and value == "whisper-cli":
+        installed = next((path for path in _installed_whisper_candidates() if path.is_file()), None)
+        resolved = str(installed) if installed else None
     if not resolved or not Path(resolved).is_file():
         raise FileNotFoundError(
             "whisper-cli não encontrado. Execute o instalador ou informe --whisper-cli."
