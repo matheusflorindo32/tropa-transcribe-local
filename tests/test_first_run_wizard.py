@@ -7,8 +7,9 @@ import pytest
 
 pytest.importorskip("PySide6")
 
-from PySide6.QtWidgets import QApplication
+from PySide6.QtWidgets import QApplication, QComboBox, QWidget
 
+from app.services.models import MODEL_CATALOG
 from app.ui.first_run_wizard import ConsentPage, FirstRunWizard, ProvisioningWorker
 
 
@@ -41,6 +42,38 @@ def test_wizard_exposes_four_clear_steps(application: QApplication) -> None:
     assert len(wizard.pageIds()) == 4
     assert wizard.windowTitle() == "Configurar Tropa Transcribe Local"
     wizard.close()
+
+
+def test_wizard_inherits_and_synchronizes_parent_model(application: QApplication) -> None:
+    del application
+    parent = QWidget()
+    parent.model = QComboBox()  # type: ignore[attr-defined]
+    parent.model.addItems(MODEL_CATALOG)  # type: ignore[attr-defined]
+    parent.model.setCurrentText("medium")  # type: ignore[attr-defined]
+
+    wizard = FirstRunWizard(parent)
+    assert wizard.selected_model() == "medium"
+
+    wizard.consent.model.setCurrentText("small")
+    wizard._completed()
+    assert parent.model.currentText() == "small"  # type: ignore[attr-defined]
+
+    wizard.close()
+    parent.close()
+
+
+def test_wizard_explicit_model_overrides_parent(application: QApplication) -> None:
+    del application
+    parent = QWidget()
+    parent.model = QComboBox()  # type: ignore[attr-defined]
+    parent.model.addItems(MODEL_CATALOG)  # type: ignore[attr-defined]
+    parent.model.setCurrentText("medium")  # type: ignore[attr-defined]
+
+    wizard = FirstRunWizard(parent, selected_model="base")
+    assert wizard.selected_model() == "base"
+
+    wizard.close()
+    parent.close()
 
 
 def test_provisioning_worker_reports_success(monkeypatch: pytest.MonkeyPatch) -> None:
