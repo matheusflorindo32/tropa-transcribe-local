@@ -1,0 +1,6 @@
+VERSÃO BETA PARA VALIDAÇÃO
+
+Este pacote contém somente a interface Python empacotada. Nesta fase, FFmpeg,
+whisper.cpp e modelos não são incorporados. Nenhum instalador executável deve
+ser publicado antes dos testes documentados em Windows limpo, da revisão de
+licenças e da análise de assinatura e segurança.
