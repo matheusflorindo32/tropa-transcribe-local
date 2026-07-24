@@ -1,0 +1,5 @@
+# Recurso futuro: este arquivo ainda não é consumido pelo MVP.
+# Termos inteiramente fictícios para demonstrar formato.
+Projeto Aurora
+Módulo Sigma
+Protocolo Exemplo

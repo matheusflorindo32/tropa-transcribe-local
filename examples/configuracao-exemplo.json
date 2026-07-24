@@ -1,0 +1,7 @@
+{
+  "model": "base",
+  "language": "pt",
+  "outputs": ["txt", "srt", "vtt"],
+  "output_dir": "transcricoes",
+  "max_file_size_mb": 20480
+}
