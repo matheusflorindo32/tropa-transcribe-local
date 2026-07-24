@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import json
-import os
 import shutil
 import subprocess
 import threading
@@ -11,6 +10,7 @@ from pathlib import Path
 
 from app.config import default_data_dir
 from app.transcription.formats import output_flags
+from app.utils.processes import NO_WINDOW_CREATION_FLAGS
 
 
 class WhisperCppError(RuntimeError):
@@ -88,14 +88,13 @@ def run_whisper(
     cancel_event: threading.Event | None = None,
 ) -> None:
     executable = Path(command[0]).resolve()
-    creation_flags = subprocess.CREATE_NO_WINDOW if os.name == "nt" else 0
     process = subprocess.Popen(
         command,
         stdout=subprocess.DEVNULL,
         stderr=subprocess.PIPE,
         text=True,
         cwd=executable.parent,
-        creationflags=creation_flags,
+        creationflags=NO_WINDOW_CREATION_FLAGS,
     )
     while process.poll() is None:
         if cancel_event and cancel_event.wait(0.1):

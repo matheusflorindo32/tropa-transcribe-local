@@ -7,3 +7,4 @@
 *.png binary
 *.ico binary
 *.zip binary
+app/resources/runtime-windows-x64.json binary

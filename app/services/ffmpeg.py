@@ -3,13 +3,13 @@
 from __future__ import annotations
 
 import json
-import os
 import shutil
 import subprocess
 import threading
 from pathlib import Path
 
 from app.config import default_data_dir
+from app.utils.processes import NO_WINDOW_CREATION_FLAGS
 
 
 class FFmpegError(RuntimeError):
@@ -73,14 +73,13 @@ def convert_to_wav(
     cancel_event: threading.Event | None = None,
 ) -> Path:
     command = build_ffmpeg_command(executable, source, destination)
-    creation_flags = subprocess.CREATE_NO_WINDOW if os.name == "nt" else 0
     process = subprocess.Popen(
         command,
         stdout=subprocess.DEVNULL,
         stderr=subprocess.PIPE,
         text=True,
         cwd=executable.resolve().parent,
-        creationflags=creation_flags,
+        creationflags=NO_WINDOW_CREATION_FLAGS,
     )
     while process.poll() is None:
         if cancel_event and cancel_event.wait(0.1):

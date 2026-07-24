@@ -24,6 +24,7 @@ from app.services.runtime_manifest import (
     RuntimeManifest,
     load_runtime_manifest,
 )
+from app.utils.processes import NO_WINDOW_CREATION_FLAGS
 
 ProgressCallback = Callable[[int, str], None]
 DOWNLOAD_CHUNK_BYTES = 1024 * 1024
@@ -440,7 +441,6 @@ def run_component_diagnostic(
         }
     }
     environment["PATH"] = clean_path
-    creation_flags = subprocess.CREATE_NO_WINDOW if os.name == "nt" else 0
     return subprocess.run(
         arguments,
         check=False,
@@ -449,5 +449,5 @@ def run_component_diagnostic(
         timeout=timeout,
         cwd=bin_dir,
         env=environment,
-        creationflags=creation_flags,
+        creationflags=NO_WINDOW_CREATION_FLAGS,
     )
