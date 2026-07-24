@@ -22,6 +22,6 @@ jobs:
       - run: python -m ruff format --check .
       - run: python -m ruff check .
       - run: python -m mypy app tools
-      - uses: DavidAnson/markdownlint-cli2-action@v22
+      - uses: DavidAnson/markdownlint-cli2-action@v23.2.0
         with:
           globs: "**/*.md"
