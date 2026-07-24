@@ -14,7 +14,7 @@ modelos não estão instalados neste ambiente.
 
 ## Arquivos
 
-- 118 arquivos versionados.
+- 120 arquivos versionados.
 - Criados: `app`, `scripts`, `tools`, `tests`, `.github`, `docs`, `course`,
   `examples` e documentos de governança.
 - Reaproveitados: nenhum; o diretório inicial estava vazio.
