@@ -13,3 +13,8 @@ Em pesquisa, siga comitê, termo e protocolo aplicáveis. Em empresa, envolva
 encarregado, segurança e jurídico. Em saúde ou segurança pública, trate a IA
 como apoio e mantenha revisão humana, auditoria e segregação. Este guia não é
 parecer jurídico.
+
+A GUI não cria conta, não contém telemetria e não envia mídia. O diagnóstico
+copiável não recebe conteúdo transcrito nem nomes da fila e redige diretórios
+do usuário. Download de modelo é uma conexão externa iniciada pelo usuário e
+não inclui a mídia; origem e hash ficam no manifesto local do modelo.

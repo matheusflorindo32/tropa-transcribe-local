@@ -44,3 +44,19 @@ python tools\check_environment.py --json
 ```
 
 Antes de compartilhar, remova caminhos, nomes e outros dados pessoais.
+
+Na GUI, **Diagnóstico** gera uma versão copiável que substitui diretórios
+privados por variáveis conhecidas e não enumera mídia nem transcrição.
+
+## Download interrompido ou pouco espaço
+
+O gerenciador reserva espaço para arquivo temporário, modelo e margem. Ao
+cancelar, remove o `.part`. Retomada não é oferecida enquanto o servidor e o
+cliente não puderem validar `Range`, ETag e tamanho com segurança; inicie o
+download novamente.
+
+## O executável abre, mas não transcreve
+
+O bundle alpha inclui a GUI/Python, porém mantém FFmpeg e `whisper-cli`
+externos. Abra **Diagnóstico**. Não copie binários aleatórios nem desative o
+antivírus; siga a instalação Windows e verifique origem/licença.

@@ -5,7 +5,21 @@ e versionamento semântico.
 
 ## [Unreleased]
 
-Nenhuma alteração adicional registrada.
+## [0.3.0-alpha] - 2026-07-24
+
+### Added
+
+- GUI com fila removível, progresso individual/total, prévia, cópia e acessibilidade.
+- Diagnóstico local copiável com redação de caminhos privados.
+- Gerenciador de modelos cancelável, atômico e protegido contra exclusão em uso.
+- SBOM CycloneDX, manifesto de componentes e geração de hashes SHA-256.
+- Preparação de instalador, checklist Windows limpo e aula prática do WhatsApp.
+
+### Changed
+
+- `small` passa a ser a recomendação visual para uso geral em pt-BR.
+- Cancelamento é diferenciado de falha e nunca produz mensagem de sucesso.
+- Release passa para `0.3.0-alpha`; binários permanecem bloqueados.
 
 ## [0.2.0-beta] - 2026-07-24
 

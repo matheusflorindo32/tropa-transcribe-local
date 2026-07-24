@@ -22,8 +22,18 @@ modelos e logs.
 
 ## 0.3
 
-Glossários, perfis, configuração persistente, atualização assistida e suporte
-Linux/macOS aprimorado.
+### 0.3.0-alpha
+
+Aplicação desktop experimental: fila, progresso por arquivo, cancelamento,
+diagnóstico redigido, gerenciador de modelos, SBOM e empacotamento `onedir`.
+Publicação binária bloqueada até Windows limpo, Defender, assinatura, licenças e
+runtime externo serem validados.
+
+### 0.3 estável
+
+Provisionamento seguro de FFmpeg/whisper.cpp sem Python/Git/CMake, atualização
+assistida, Authenticode e validação completa de instalação/desinstalação.
+Glossários e perfis permanecem planejados.
 
 ## 0.4
 

@@ -11,3 +11,8 @@
 
 O código evita shell, valida allowlists e limita downloads. Isso não elimina
 vulnerabilidades de codecs, cadeia de suprimentos, sistema ou acesso físico.
+
+Builds desktop devem gerar SBOM e SHA-256, manter Defender/SmartScreen ativos e
+ser assinadas somente por identidade protegida fora do Git. Consulte
+[`antivirus-e-assinatura.md`](antivirus-e-assinatura.md). Nunca trate uma
+exceção de antivírus como etapa normal de instalação.
