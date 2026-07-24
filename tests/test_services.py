@@ -25,6 +25,10 @@ def test_temporary_workspace_can_be_kept(tmp_path: Path) -> None:
 
 def test_missing_executables(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setattr("shutil.which", lambda _: None)
+    monkeypatch.setattr(
+        "app.services.runtime_provisioning.validate_component",
+        lambda _name: (_ for _ in ()).throw(FileNotFoundError()),
+    )
     monkeypatch.setattr("app.services.ffmpeg.default_data_dir", lambda: tmp_path)
     monkeypatch.setattr("app.transcription.whisper_cpp._installed_whisper_candidates", list)
     with pytest.raises(FileNotFoundError, match="FFmpeg"):
@@ -43,6 +47,10 @@ def test_ffmpeg_falls_back_to_installation_manifest(
         encoding="utf-8",
     )
     monkeypatch.setattr("shutil.which", lambda _: None)
+    monkeypatch.setattr(
+        "app.services.runtime_provisioning.validate_component",
+        lambda _name: (_ for _ in ()).throw(FileNotFoundError()),
+    )
     monkeypatch.setattr("app.services.ffmpeg.default_data_dir", lambda: tmp_path)
     assert resolve_ffmpeg() == executable.resolve()
 
@@ -84,6 +92,10 @@ def test_whisper_cli_falls_back_to_installed_candidate(
     executable.parent.mkdir(parents=True)
     executable.write_bytes(b"x")
     monkeypatch.setattr("shutil.which", lambda _: None)
+    monkeypatch.setattr(
+        "app.services.runtime_provisioning.validate_component",
+        lambda _name: (_ for _ in ()).throw(FileNotFoundError()),
+    )
     monkeypatch.setattr(
         "app.transcription.whisper_cpp._installed_whisper_candidates",
         lambda: [executable],

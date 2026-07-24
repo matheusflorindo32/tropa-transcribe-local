@@ -2,55 +2,60 @@ from __future__ import annotations
 
 import hashlib
 import threading
-from email.message import Message
 from pathlib import Path
+from types import MappingProxyType, SimpleNamespace
 
 import pytest
 
 from app.services.model_download import delete_model, download_model
+from app.services.runtime_manifest import ModelSpec
 
 
-class FakeResponse:
-    def __init__(self, content: bytes, cancel: threading.Event | None = None) -> None:
-        self.content = content
-        self.position = 0
-        self.cancel = cancel
-        self.headers = Message()
-        self.headers["Content-Length"] = str(len(content))
-        self.headers["x-linked-etag"] = hashlib.sha256(content).hexdigest()
+def _model(content: bytes) -> ModelSpec:
+    return ModelSpec(
+        name="base",
+        filename="ggml-base.bin",
+        url="https://huggingface.co/example/ggml-base.bin",
+        sha256=hashlib.sha256(content).hexdigest(),
+        size_bytes=len(content),
+        license="MIT",
+        homepage="https://huggingface.co/example",
+        source="https://github.com/example/source",
+        revision="a" * 40,
+    )
 
-    def __enter__(self) -> FakeResponse:
-        return self
 
-    def __exit__(self, *_args: object) -> None:
-        return None
-
-    def read(self, size: int) -> bytes:
-        chunk = self.content[self.position : self.position + size]
-        self.position += len(chunk)
-        if self.cancel and self.position:
-            self.cancel.set()
-        return chunk
+def _patch_manifest(
+    monkeypatch: pytest.MonkeyPatch,
+    content: bytes,
+) -> ModelSpec:
+    spec = _model(content)
+    manifest = SimpleNamespace(
+        models=MappingProxyType({"base": spec}),
+        digest="b" * 64,
+        allowed_download_hosts=frozenset({"huggingface.co"}),
+    )
+    monkeypatch.setattr("app.services.model_download.load_runtime_manifest", lambda: manifest)
+    monkeypatch.setattr("app.services.runtime_manifest.model_spec", lambda _name: spec)
+    monkeypatch.setattr("app.services.models.minimum_model_bytes", lambda _: 1)
+    monkeypatch.setattr("app.services.model_download.MODEL_DISK_MARGIN_BYTES", 0)
+    return spec
 
 
 def test_download_validates_hash_and_is_atomic(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     content = b"modelo-seguro"
-    monkeypatch.setattr("app.services.model_download.minimum_model_bytes", lambda _: 1)
-    monkeypatch.setattr("app.services.models.minimum_model_bytes", lambda _: 1)
-    monkeypatch.setattr(
-        "app.services.model_download.required_free_bytes",
-        lambda _: 1,
-    )
-    monkeypatch.setattr(
-        "app.services.model_download._remote_metadata",
-        lambda _url: (hashlib.sha256(content).hexdigest(), len(content)),
-    )
-    monkeypatch.setattr(
-        "urllib.request.urlopen",
-        lambda *_args, **_kwargs: FakeResponse(content),
-    )
+    spec = _patch_manifest(monkeypatch, content)
+
+    def fake_download(**kwargs: object) -> Path:
+        destination = kwargs["destination"]
+        assert isinstance(destination, Path)
+        assert kwargs["sha256"] == spec.sha256
+        destination.write_bytes(content)
+        return destination
+
+    monkeypatch.setattr("app.services.model_download.download_verified_file", fake_download)
 
     result = download_model("base", tmp_path)
 
@@ -60,24 +65,41 @@ def test_download_validates_hash_and_is_atomic(
 
 
 def test_download_cancel_removes_partial(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
-    cancel = threading.Event()
-    monkeypatch.setattr("app.services.model_download.minimum_model_bytes", lambda _: 1)
-    monkeypatch.setattr("app.services.model_download.required_free_bytes", lambda _: 1)
-    monkeypatch.setattr(
-        "app.services.model_download._remote_metadata",
-        lambda _url: (None, 2 * 1024**2),
-    )
-    monkeypatch.setattr(
-        "urllib.request.urlopen",
-        lambda *_args, **_kwargs: FakeResponse(b"x" * (2 * 1024**2), cancel),
-    )
+    _patch_manifest(monkeypatch, b"model")
+
+    def canceled(**_kwargs: object) -> Path:
+        raise InterruptedError("Download cancelado; arquivo parcial removido.")
+
+    monkeypatch.setattr("app.services.model_download.download_verified_file", canceled)
     with pytest.raises(InterruptedError):
-        download_model("base", tmp_path, cancel_event=cancel)
-    assert not list(tmp_path.glob("*.part"))
+        download_model("base", tmp_path, cancel_event=threading.Event())
     assert not (tmp_path / "ggml-base.bin").exists()
 
 
+def test_corrupt_existing_model_is_repaired_atomically(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    content = b"trusted-model"
+    _patch_manifest(monkeypatch, content)
+    destination = tmp_path / "ggml-base.bin"
+    destination.write_bytes(b"corrupt")
+    destination.with_suffix(".sha256.json").write_text(
+        '{"sha256":"' + ("0" * 64) + '"}',
+        encoding="utf-8",
+    )
+
+    def fake_download(**kwargs: object) -> Path:
+        path = kwargs["destination"]
+        assert isinstance(path, Path)
+        path.write_bytes(content)
+        return path
+
+    monkeypatch.setattr("app.services.model_download.download_verified_file", fake_download)
+    assert download_model("base", tmp_path).read_bytes() == content
+
+
 def test_download_rejects_low_disk(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    _patch_manifest(monkeypatch, b"model")
     usage = type("Usage", (), {"free": 0})()
     monkeypatch.setattr("app.services.model_download.shutil.disk_usage", lambda _: usage)
     with pytest.raises(OSError, match="Espaço livre insuficiente"):

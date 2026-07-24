@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import os
 import shutil
 import subprocess
 import threading
@@ -17,7 +18,16 @@ class FFmpegError(RuntimeError):
 
 def resolve_ffmpeg(candidate: str | Path = "ffmpeg") -> Path:
     value = str(candidate)
-    resolved = shutil.which(value) if Path(value).name == value else value
+    resolved: str | None = None
+    if value == "ffmpeg":
+        try:
+            from app.services.runtime_provisioning import validate_component
+
+            resolved = str(validate_component("ffmpeg"))
+        except (FileNotFoundError, OSError, ValueError, RuntimeError):
+            pass
+    if not resolved:
+        resolved = shutil.which(value) if Path(value).name == value else value
     if not resolved and value == "ffmpeg":
         manifest_path = default_data_dir() / "installation.json"
         if manifest_path.is_file():
@@ -29,7 +39,9 @@ def resolve_ffmpeg(candidate: str | Path = "ffmpeg") -> Path:
             except (OSError, json.JSONDecodeError):
                 pass
     if not resolved or not Path(resolved).is_file():
-        raise FileNotFoundError("FFmpeg não encontrado. Execute scripts/windows/verificar.ps1.")
+        raise FileNotFoundError(
+            "FFmpeg não encontrado. Abra Configurar componentes ou execute a verificação."
+        )
     return Path(resolved).resolve()
 
 
@@ -61,8 +73,14 @@ def convert_to_wav(
     cancel_event: threading.Event | None = None,
 ) -> Path:
     command = build_ffmpeg_command(executable, source, destination)
+    creation_flags = subprocess.CREATE_NO_WINDOW if os.name == "nt" else 0
     process = subprocess.Popen(
-        command, stdout=subprocess.DEVNULL, stderr=subprocess.PIPE, text=True
+        command,
+        stdout=subprocess.DEVNULL,
+        stderr=subprocess.PIPE,
+        text=True,
+        cwd=executable.resolve().parent,
+        creationflags=creation_flags,
     )
     while process.poll() is None:
         if cancel_event and cancel_event.wait(0.1):

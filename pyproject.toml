@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "tropa-transcribe-local"
-version = "0.3.0a1"
+version = "0.3.1a1"
 description = "Transcrição local e privada com FFmpeg e whisper.cpp."
 readme = "README.md"
 requires-python = ">=3.11"

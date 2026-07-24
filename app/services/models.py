@@ -112,6 +112,12 @@ def validate_model_file(
         recorded = metadata.get("sha256")
         if not isinstance(recorded, str) or len(recorded) != 64:
             raise ValueError("O SHA-256 registrado para o modelo é inválido.")
+        if metadata.get("schema_version") == 2:
+            from app.services.runtime_manifest import model_spec
+
+            trusted = model_spec(normalized)
+            if recorded.lower() != trusted.sha256 or actual_size != trusted.size_bytes:
+                raise ValueError("O registro local diverge do manifesto confiável do modelo.")
         if calculate_sha256(candidate) != recorded.lower():
             raise ValueError("O SHA-256 do modelo não corresponde ao registro local.")
     return candidate
