@@ -1,6 +1,30 @@
 # Instalação no Windows
 
-## 1. Verificar pré-requisitos
+## Caminho recomendado: pacote desktop experimental
+
+Quando um artefato interno de validação for fornecido, instale por usuário e
+abra o aplicativo. Não é necessário ter Python, Git, CMake, Visual Studio,
+FFmpeg ou whisper.cpp. O assistente de primeiro uso:
+
+1. explica que a transcrição é local;
+2. mostra componentes, tamanhos, espaço livre, licenças e diretórios;
+3. solicita autorização explícita para os downloads;
+4. baixa versões fixas em arquivos temporários;
+5. valida tamanho e SHA-256 do arquivo e de cada item extraído;
+6. executa diagnóstico e só então informa sucesso.
+
+Destino padrão:
+
+```text
+Aplicativo: %LOCALAPPDATA%\Programs\TropaTranscribeLocal
+Runtimes:   %LOCALAPPDATA%\TropaTranscribeLocal\runtime-v2
+Modelos:    %LOCALAPPDATA%\TropaTranscribeLocal\models
+```
+
+Não execute o aplicativo como administrador e não desative Defender ou
+SmartScreen. Esta versão ainda não possui artefato público.
+
+## Caminho para desenvolvimento: verificar pré-requisitos
 
 Abra PowerShell e execute:
 
@@ -22,8 +46,9 @@ atalho ainda não entrou no `PATH`.
 
 Fontes oficiais: [Git](https://git-scm.com/download/win),
 [CMake](https://cmake.org/download/), [Python](https://www.python.org/downloads/windows/)
-e [FFmpeg](https://ffmpeg.org/download.html). O projeto não escolhe nem
-redistribui um build de FFmpeg nesta fase; confira licença e origem.
+e [FFmpeg](https://ffmpeg.org/download.html). Esse fluxo legado compila
+whisper.cpp; o pacote desktop usa os binários fixados descritos em
+[`componentes-runtime-windows.md`](componentes-runtime-windows.md).
 
 ## 2. Instalar
 
@@ -112,7 +137,7 @@ Para remover também modelos, confirme explicitamente:
 
 Transcrições fora da pasta da aplicação são preservadas.
 
-## Desktop alpha
+## Construir o desktop alpha
 
 O bundle experimental `onedir` é construído com:
 
@@ -120,8 +145,17 @@ O bundle experimental `onedir` é construído com:
 .\scripts\windows\build-gui.ps1 -PythonPath ".\.venv\Scripts\python.exe"
 ```
 
-Ele abre sem Python instalado, mas não incorpora FFmpeg/whisper.cpp. O
-instalador Inno Setup não instala dependências globais, permite escolher pasta,
-mostra licenças e oferece excluir somente modelos na desinstalação. Antes de
-usar qualquer instalador, confira hash e
+Ele abre sem Python instalado e oferece provisionamento explícito de
+FFmpeg/whisper.cpp/modelo. O instalador Inno Setup não incorpora esses
+downloads nem instala dependências globais; permite escolher pasta, mostra
+licenças e oferece excluir runtimes e modelos separadamente na desinstalação.
+Transcrições são preservadas. Antes de usar qualquer instalador, confira hash e
 [`validacao-desktop-windows-limpo.md`](validacao-desktop-windows-limpo.md).
+
+Instalação silenciosa é aceita somente com consentimento explícito e instala
+apenas app/bootstrap:
+
+```powershell
+.\TropaTranscribeLocal-0.3.1-alpha-setup.exe `
+  /VERYSILENT /SUPPRESSMSGBOXES /NORESTART /ACCEPTLICENSE=YES
+```

@@ -6,7 +6,7 @@ Transcrição local e privada de áudio e vídeo, com foco inicial em português
 brasileiro. O projeto integra FFmpeg e whisper.cpp, oferece CLI, interface
 gráfica opcional e materiais do curso livre da Tropa Científica.
 
-Versão em preparação: **0.3.0-alpha**. A GUI desktop evoluiu, mas não há binário
+Versão em preparação: **0.3.1-alpha**. A GUI desktop evoluiu, mas não há binário
 oficial publicado.
 
 > **Aviso de precisão:** A transcrição é gerada automaticamente e pode conter
@@ -27,7 +27,9 @@ ggml-org ou FFmpeg.
 - seleção de idioma e modelos multilíngues;
 - lote, caminhos com espaços e Unicode, modo silencioso e cancelamento;
 - GUI PySide6 com fila, arrastar e soltar, progresso individual/total, prévia,
-  diagnóstico seguro e gerenciador de modelos;
+  diagnóstico seguro, gerenciador de modelos e assistente de primeiro uso;
+- no pacote Windows experimental, provisionamento por usuário de FFmpeg,
+  whisper.cpp e modelos sem Python, Git, CMake ou Visual Studio;
 - Windows como prioridade do MVP; Linux e macOS em estágio experimental.
 
 O suporte depende dos codecs habilitados na instalação local do FFmpeg. Os
@@ -40,7 +42,7 @@ ser confirmada no computador de destino.
 [INSERIR GIF OU CAPTURAS DE TELA APÓS VALIDAÇÃO VISUAL]
 ```
 
-## Requisitos
+## Requisitos para executar o código-fonte
 
 - Windows 10/11 (prioritário), Linux ou macOS;
 - Python 3.11 ou 3.12;
@@ -51,7 +53,20 @@ ser confirmada no computador de destino.
 O instalador fixa o whisper.cpp em `v1.9.1`. Consulte
 [`docs/fontes-tecnicas.md`](docs/fontes-tecnicas.md).
 
-## Instalação rápida no Windows
+## Primeiro uso do pacote Windows experimental
+
+O instalador Inno Setup contém somente o aplicativo e o bootstrap. Ao abrir,
+o assistente informa processamento local, componentes, tamanhos, espaço livre,
+licenças e diretórios antes de qualquer download. Após consentimento, baixa
+FFmpeg, whisper.cpp e o modelo escolhido em `%LOCALAPPDATA%`, confere tamanhos
+e SHA-256 exatos e executa diagnósticos. Não exige administrador, não altera o
+`PATH` global e não instala toolchain.
+
+Esse pacote ainda não é publicado. Consulte
+[`docs/release-v0.3.1-alpha.md`](docs/release-v0.3.1-alpha.md) e o inventário
+[`docs/componentes-runtime-windows.md`](docs/componentes-runtime-windows.md).
+
+## Instalação pelo código-fonte no Windows
 
 Abra o PowerShell na raiz do repositório:
 
@@ -107,9 +122,8 @@ tropa-transcribe-gui
 ```
 
 O build experimental `onedir` incorpora Python/PySide6 e pode abrir sem Python
-instalado. FFmpeg, `whisper-cli` e modelos continuam externos; portanto, uma
-máquina totalmente limpa ainda exige provisionamento documentado antes de
-transcrever. Veja [`docs/release-v0.3.0-alpha.md`](docs/release-v0.3.0-alpha.md).
+instalado. FFmpeg, `whisper-cli` e modelos não são incorporados ao instalador:
+o assistente os baixa e valida sob ação explícita do usuário.
 
 ## Modelos
 
@@ -128,9 +142,9 @@ hardware. Modelos não são versionados no Git. Baixe com:
 python tools\download_model.py base
 ```
 
-O downloader restringe nomes e origem, grava de modo atômico, calcula SHA-256
-e valida o ETag SHA-256 quando o servidor LFS o fornece. Também rejeita arquivos
-menores que o tamanho mínimo plausível de cada modelo.
+O downloader restringe nomes e origem, usa revisão imutável, grava de modo
+atômico e exige o tamanho e SHA-256 exatos do manifesto incorporado. Também
+remove arquivos parciais ao cancelar ou falhar.
 
 ## Privacidade, segurança e limitações
 
@@ -190,8 +204,11 @@ Relate vulnerabilidades de forma privada para:
 ## Licença e créditos
 
 O código autoral deste repositório usa a licença MIT. Dependências mantêm suas
-próprias licenças; FFmpeg pode ser LGPL ou GPL conforme a compilação, PySide6
-é LGPLv3/GPLv3 ou comercial, e Whisper/whisper.cpp são MIT. Não distribuímos
-binários de terceiros nesta fase. Leia [`THIRD-PARTY-NOTICES.md`](THIRD-PARTY-NOTICES.md).
+próprias licenças. A build FFmpeg selecionada declara LGPL-3.0-or-later,
+PySide6 wheel declara LGPLv3/GPLv2/GPLv3 (com regime comercial disponível
+separadamente), e Whisper/whisper.cpp são
+MIT. O instalador não incorpora os runtimes externos; o usuário autoriza seus
+downloads. Leia [`THIRD-PARTY-NOTICES.md`](THIRD-PARTY-NOTICES.md) e
+[`LICENSES/README.md`](LICENSES/README.md).
 
 Contato institucional: `[INSERIR E-MAIL INSTITUCIONAL]`.

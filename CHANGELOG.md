@@ -5,6 +5,34 @@ e versionamento semântico.
 
 ## [Unreleased]
 
+## [0.3.1-alpha] - 2026-07-24
+
+### Added
+
+- Manifesto Windows x64 imutável com versões, URLs HTTPS, tamanhos, SHA-256,
+  licenças, origem, arquivos instalados e comandos de diagnóstico.
+- Provisionador por usuário de FFmpeg shared, whisper.cpp e modelos, sem
+  compilação, elevação ou alteração do `PATH`.
+- Assistente de primeiro uso com consentimento, espaço livre, progresso,
+  cancelamento, reparo e diagnóstico.
+- Testes de manifesto adulterado, hash incorreto, redirecionamento não
+  permitido, path traversal, symlink, cancelamento e DLL inesperada.
+- Inno Setup 7.0.2 preparado para instalador experimental app/bootstrap.
+
+### Changed
+
+- Modelos usam revisão imutável e exigem tamanho e SHA-256 exatos.
+- Resolução de FFmpeg e whisper.cpp prioriza runtimes locais validados.
+- Inventário, SBOM, avisos de terceiros e documentação de licenças passam a
+  registrar os componentes concretos.
+
+### Security
+
+- Extração ZIP por allowlist em staging, com promoção atômica e rollback.
+- Diagnósticos nativos usam argumentos fixos, `shell=False`, diretório
+  confiável e `PATH` reduzido.
+- Publicação de executável, instalador, tag, release e bundle segue bloqueada.
+
 ## [0.3.0-alpha] - 2026-07-24
 
 ### Added
