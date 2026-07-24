@@ -111,3 +111,17 @@ Para remover também modelos, confirme explicitamente:
 ```
 
 Transcrições fora da pasta da aplicação são preservadas.
+
+## Desktop alpha
+
+O bundle experimental `onedir` é construído com:
+
+```powershell
+.\scripts\windows\build-gui.ps1 -PythonPath ".\.venv\Scripts\python.exe"
+```
+
+Ele abre sem Python instalado, mas não incorpora FFmpeg/whisper.cpp. O
+instalador Inno Setup não instala dependências globais, permite escolher pasta,
+mostra licenças e oferece excluir somente modelos na desinstalação. Antes de
+usar qualquer instalador, confira hash e
+[`validacao-desktop-windows-limpo.md`](validacao-desktop-windows-limpo.md).

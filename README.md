@@ -6,8 +6,8 @@ Transcrição local e privada de áudio e vídeo, com foco inicial em português
 brasileiro. O projeto integra FFmpeg e whisper.cpp, oferece CLI, interface
 gráfica opcional e materiais do curso livre da Tropa Científica.
 
-Versão atual: **0.2.0-beta**. Esta beta estabiliza o fluxo Windows; não há
-binário oficial publicado.
+Versão em preparação: **0.3.0-alpha**. A GUI desktop evoluiu, mas não há binário
+oficial publicado.
 
 > **Aviso de precisão:** A transcrição é gerada automaticamente e pode conter
 > erros. Revise nomes, números, termos técnicos e informações críticas antes de
@@ -26,7 +26,8 @@ ggml-org ou FFmpeg.
 - exportação TXT, SRT, VTT e JSON pelo `whisper-cli`;
 - seleção de idioma e modelos multilíngues;
 - lote, caminhos com espaços e Unicode, modo silencioso e cancelamento;
-- GUI opcional em PySide6, com arrastar e soltar e worker thread;
+- GUI PySide6 com fila, arrastar e soltar, progresso individual/total, prévia,
+  diagnóstico seguro e gerenciador de modelos;
 - Windows como prioridade do MVP; Linux e macOS em estágio experimental.
 
 O suporte depende dos codecs habilitados na instalação local do FFmpeg. Os
@@ -105,6 +106,11 @@ python -m pip install -e ".[gui]"
 tropa-transcribe-gui
 ```
 
+O build experimental `onedir` incorpora Python/PySide6 e pode abrir sem Python
+instalado. FFmpeg, `whisper-cli` e modelos continuam externos; portanto, uma
+máquina totalmente limpa ainda exige provisionamento documentado antes de
+transcrever. Veja [`docs/release-v0.3.0-alpha.md`](docs/release-v0.3.0-alpha.md).
+
 ## Modelos
 
 | Modelo | Disco aproximado | Memória aproximada | Perfil |
@@ -159,6 +165,9 @@ Para repetir o teste real:
 
 Veja [`docs/validacao-windows-real.md`](docs/validacao-windows-real.md) e o
 [`checklist de Windows limpo`](docs/checklist-windows-limpo.md).
+Para o desktop, use o
+[`checklist específico`](docs/validacao-desktop-windows-limpo.md) e o guia de
+[`antivírus e assinatura`](docs/antivirus-e-assinatura.md).
 
 ## Curso Tropa Científica
 

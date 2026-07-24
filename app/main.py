@@ -15,6 +15,10 @@ def main() -> None:
 
     application = QApplication(sys.argv)
     application.setApplicationName("Tropa Transcribe Local")
+    application.setApplicationVersion("0.3.0-alpha")
+    application.setOrganizationName("Tropa Científica")
+    # Qt 6 usa Per-Monitor DPI Aware V2 no Windows e os widgets padrão
+    # herdam preferências de contraste/escala. A interface não usa animações.
     window = MainWindow()
     window.show()
     raise SystemExit(application.exec())

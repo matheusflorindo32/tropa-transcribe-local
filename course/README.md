@@ -13,6 +13,10 @@ acesso de administrador para instalação e áudio próprio ou autorizado.
 Progressão: **Conceito → Arquitetura → Implementação → Comparação → Projeto
 real**. Materiais não substituem formação jurídica, pericial ou regulamentada.
 
+A prática
+[`Do áudio do WhatsApp à transcrição local`](aulas/pratica-whatsapp-transcricao-local.md)
+conecta autorização, instalação, transcrição, revisão, exportação e descarte.
+
 > **[VALIDAÇÃO ADMINISTRATIVA NECESSÁRIA]** Certificado de conclusão de curso
 > livre emitido pela Tropa Científica, condicionado ao cumprimento dos critérios
 > definidos.

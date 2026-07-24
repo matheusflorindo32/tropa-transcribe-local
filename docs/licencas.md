@@ -14,3 +14,10 @@ complexidade de compilação. A licença final de um binário depende de tudo qu
 ele contém. Antes de release: gerar inventário, registrar versões, obter fontes
 correspondentes, revisar plugins Qt/FFmpeg e buscar revisão jurídica quando o
 risco justificar.
+
+Na alpha, o bundle incorpora Python, PySide6/Qt e o bootloader do PyInstaller.
+FFmpeg, `whisper.cpp` e pesos permanecem externos conforme
+[`adr/0001-limite-de-binarios-externos.md`](adr/0001-limite-de-binarios-externos.md).
+Consulte `packaging/components.json`, `sbom.cdx.json` e
+`THIRD-PARTY-NOTICES.md`. A existência do inventário não substitui revisão
+jurídica da distribuição concreta.

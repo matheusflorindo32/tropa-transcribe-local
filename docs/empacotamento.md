@@ -11,7 +11,7 @@
 | Manutenção | comunidade ampla | complexidade maior | alinhado ao Qt |
 | Cross-build | não | não recomendado | por plataforma |
 
-## Escolha da beta
+## Escolha da alpha
 
 PyInstaller em modo `onedir`, como dependência opcional, pela previsibilidade e
 diagnóstico mais simples. Não publicar `onefile` inicialmente: extração em
@@ -28,12 +28,15 @@ Nenhum binário foi publicado nesta entrega.
 - `packaging/windows/tropa-transcribe-local.spec`: bundle PyInstaller `onedir`;
 - `scripts/windows/build-gui.ps1`: build com códigos de saída verificados;
 - `packaging/windows/installer.iss`: instalação por usuário com Inno Setup;
-- `packaging/windows/PRE-RELEASE-NOTICE.txt`: aviso obrigatório de beta.
+- `packaging/windows/PRE-RELEASE-NOTICE.txt`: aviso obrigatório de alpha;
+- `packaging/components.json`: componentes incorporados e externos;
+- `tools/generate_supply_chain.py`: SBOM e hashes do artefato.
 
 Para gerar artefatos exclusivamente locais:
 
 ```powershell
 .\scripts\windows\build-gui.ps1
+.\scripts\windows\build-gui.ps1 -PythonPath ".\.venv\Scripts\python.exe"
 .\scripts\windows\build-gui.ps1 -BuildInstaller
 ```
 
@@ -44,7 +47,9 @@ tratados como falha.
 
 ## Bloqueios para distribuição
 
-O pacote ainda não foi validado em Windows limpo. Permanecem obrigatórios:
+Uma build local de 113,01 MiB foi produzida e abriu em smoke; consulte
+[`validacao-desktop-build-local.md`](validacao-desktop-build-local.md). O pacote
+ainda não foi validado em Windows limpo. Permanecem obrigatórios:
 teste visual/acessível da GUI, teste sem Python, antivírus, SBOM, hashes,
-assinatura Authenticode, política de atualização e revisão das obrigações de
+SmartScreen, instalador/desinstalação, assinatura Authenticode, política de atualização e revisão das obrigações de
 Qt/PySide6 e de cada binário incorporado futuramente.

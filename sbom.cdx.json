@@ -1,0 +1,55 @@
+{
+  "bomFormat": "CycloneDX",
+  "specVersion": "1.6",
+  "serialNumber": "urn:uuid:c7b57a9f-a94d-57b4-884a-e243ae668d14",
+  "version": 1,
+  "metadata": {
+    "timestamp": "2026-07-24T00:00:00+00:00",
+    "component": {
+      "type": "application",
+      "name": "Tropa Transcribe Local",
+      "version": "0.3.0-alpha"
+    }
+  },
+  "components": [
+    {
+      "type": "library",
+      "name": "Python",
+      "version": "3.11",
+      "licenses": [{"expression": "PSF-2.0"}],
+      "properties": [{"name": "tropa:incorporated", "value": "true"}]
+    },
+    {
+      "type": "library",
+      "name": "PySide6 / Qt for Python",
+      "version": ">=6.8,<7",
+      "licenses": [
+        {
+          "expression": "LGPL-3.0-only OR GPL-3.0-only OR LicenseRef-Qt-Commercial"
+        }
+      ],
+      "properties": [{"name": "tropa:incorporated", "value": "true"}]
+    },
+    {
+      "type": "library",
+      "name": "PyInstaller",
+      "version": ">=6.21,<7",
+      "licenses": [{"expression": "GPL-2.0-only WITH Bootloader-exception"}],
+      "properties": [{"name": "tropa:incorporated", "value": "true"}]
+    },
+    {
+      "type": "library",
+      "name": "FFmpeg",
+      "version": "external",
+      "licenses": [{"expression": "LGPL-2.1-or-later OR GPL-2.0-or-later"}],
+      "properties": [{"name": "tropa:incorporated", "value": "false"}]
+    },
+    {
+      "type": "library",
+      "name": "whisper.cpp",
+      "version": "v1.9.1",
+      "licenses": [{"expression": "MIT"}],
+      "properties": [{"name": "tropa:incorporated", "value": "false"}]
+    }
+  ]
+}

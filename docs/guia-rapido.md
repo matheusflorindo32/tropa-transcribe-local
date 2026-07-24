@@ -10,3 +10,15 @@
 
 Resultado esperado: caminhos dos arquivos gerados e código de saída zero.
 Falhas mostram orientação sem imprimir conteúdo transcrito.
+
+## GUI experimental
+
+1. Abra `TropaTranscribeLocal.exe` ou execute `tropa-transcribe-gui`.
+2. Use **Diagnóstico** antes do primeiro arquivo.
+3. Em **Modelos**, escolha `small` e aguarde download e validação.
+4. Arraste arquivos, escolha formatos e destino e acione **Transcrever**.
+5. Acompanhe progresso individual e total; **Cancelar** encerra com estado próprio.
+6. Revise e copie a prévia TXT; abra o destino para os demais formatos.
+
+O executável alpha abre sem Python, mas não inclui runtime FFmpeg/whisper.cpp.
+Ausências aparecem como reprovação, nunca como sucesso.

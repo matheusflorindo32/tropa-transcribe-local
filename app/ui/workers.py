@@ -12,8 +12,12 @@ from app.transcription.progress import ProgressEvent
 
 
 class TranscriptionWorker(QObject):
-    progress = Signal(int, str)
+    file_started = Signal(int)
+    file_progress = Signal(int, int, str)
+    file_completed = Signal(int, list)
+    total_progress = Signal(int, str)
     completed = Signal(list)
+    canceled = Signal(str)
     failed = Signal(str)
     finished = Signal()
 
@@ -31,16 +35,23 @@ class TranscriptionWorker(QObject):
             for index, request in enumerate(self.requests):
                 if self.cancel_event.is_set():
                     raise InterruptedError("Operação cancelada.")
-                generated.extend(
+                self.file_started.emit(index)
+                file_outputs = [
                     str(path)
                     for path in self.engine.transcribe(
                         request,
                         partial(self._report, index, total),
                         cancel_event=self.cancel_event,
                     )
-                )
+                ]
+                generated.extend(file_outputs)
+                self.file_completed.emit(index, file_outputs)
+            if self.cancel_event.is_set():
+                raise InterruptedError("Operação cancelada.")
             self.completed.emit(generated)
-        except (OSError, ValueError, RuntimeError, InterruptedError) as exc:
+        except InterruptedError as exc:
+            self.canceled.emit(str(exc))
+        except (OSError, ValueError, RuntimeError) as exc:
             self.failed.emit(str(exc))
         finally:
             self.finished.emit()
@@ -51,4 +62,42 @@ class TranscriptionWorker(QObject):
 
     def _report(self, index: int, total: int, event: ProgressEvent) -> None:
         overall = int(((index + event.percent / 100) / total) * 100)
-        self.progress.emit(overall, event.message)
+        self.file_progress.emit(index, event.percent, event.message)
+        self.total_progress.emit(overall, event.message)
+
+
+class ModelDownloadWorker(QObject):
+    """Executa o download sem bloquear o event loop da janela."""
+
+    progress = Signal(int, str)
+    completed = Signal(str)
+    canceled = Signal(str)
+    failed = Signal(str)
+    finished = Signal()
+
+    def __init__(self, model: str) -> None:
+        super().__init__()
+        self.model = model
+        self.cancel_event = threading.Event()
+
+    @Slot()
+    def run(self) -> None:
+        from app.services.model_download import download_model
+
+        try:
+            result = download_model(
+                self.model,
+                cancel_event=self.cancel_event,
+                progress=self.progress.emit,
+            )
+            self.completed.emit(str(result))
+        except InterruptedError as exc:
+            self.canceled.emit(str(exc))
+        except (OSError, ValueError, RuntimeError) as exc:
+            self.failed.emit(str(exc))
+        finally:
+            self.finished.emit()
+
+    @Slot()
+    def cancel(self) -> None:
+        self.cancel_event.set()

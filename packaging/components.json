@@ -1,0 +1,62 @@
+{
+  "schema_version": 1,
+  "release": "0.3.0-alpha",
+  "components": [
+    {
+      "name": "Tropa Transcribe Local",
+      "version": "0.3.0-alpha",
+      "license": "MIT",
+      "incorporated": true,
+      "purpose": "Aplicação e interface"
+    },
+    {
+      "name": "Python",
+      "version": "3.11",
+      "license": "PSF-2.0",
+      "incorporated": true,
+      "purpose": "Runtime empacotado pelo PyInstaller"
+    },
+    {
+      "name": "PySide6 / Qt for Python",
+      "version": ">=6.8,<7",
+      "license": "LGPL-3.0-only OR GPL-3.0-only OR LicenseRef-Qt-Commercial",
+      "incorporated": true,
+      "purpose": "Interface gráfica"
+    },
+    {
+      "name": "PyInstaller",
+      "version": ">=6.21,<7",
+      "license": "GPL-2.0-only WITH Bootloader-exception",
+      "incorporated": true,
+      "purpose": "Ferramenta de build; bootloader no pacote"
+    },
+    {
+      "name": "FFmpeg",
+      "version": "build externa não fixada",
+      "license": "LGPL-2.1-or-later ou GPL-2.0-or-later conforme build",
+      "incorporated": false,
+      "purpose": "Conversão de mídia"
+    },
+    {
+      "name": "whisper.cpp",
+      "version": "v1.9.1",
+      "license": "MIT",
+      "incorporated": false,
+      "purpose": "Inferência local"
+    },
+    {
+      "name": "Whisper model weights",
+      "version": "selecionada pelo usuário",
+      "license": "MIT",
+      "incorporated": false,
+      "purpose": "Modelo externo baixado sob ação do usuário"
+    },
+    {
+      "name": "Inno Setup",
+      "version": "6 ou 7",
+      "license": "Inno Setup License",
+      "incorporated": false,
+      "purpose": "Ferramenta externa que compila o instalador"
+    }
+  ]
+}

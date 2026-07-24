@@ -1,6 +1,7 @@
 [CmdletBinding()]
 param(
-    [switch]$BuildInstaller
+    [switch]$BuildInstaller,
+    [string]$PythonPath = ""
 )
 
 Set-StrictMode -Version 3.0
@@ -13,7 +14,14 @@ try {
     if ([Environment]::OSVersion.Platform -ne [PlatformID]::Win32NT) {
         throw "O pacote Windows precisa ser construído no Windows."
     }
-    $python = Get-RequiredCommandPath "python" "Instale Python 3.11 ou 3.12."
+    $python = if ($PythonPath) {
+        if (-not (Test-Path -LiteralPath $PythonPath -PathType Leaf)) {
+            throw "PythonPath não aponta para um executável: $PythonPath"
+        }
+        (Resolve-Path -LiteralPath $PythonPath).Path
+    } else {
+        Get-RequiredCommandPath "python" "Instale Python 3.11 ou 3.12 para construir."
+    }
     Invoke-CheckedNative -FilePath $python -ArgumentList @(
         "-m", "pip", "install", "--editable", "$ProjectRoot[gui,packaging]"
     ) -Activity "Instalação das dependências de empacotamento"
@@ -31,6 +39,13 @@ try {
         throw "PyInstaller terminou sem produzir TropaTranscribeLocal.exe."
     }
     Write-Host "Bundle GUI criado para validação local: $guiExecutable"
+    Invoke-CheckedNative -FilePath $python -ArgumentList @(
+        (Join-Path $ProjectRoot "tools\generate_supply_chain.py"),
+        "--components", (Join-Path $ProjectRoot "packaging\components.json"),
+        "--artifact-dir", (Join-Path $ProjectRoot "dist\TropaTranscribeLocal"),
+        "--output-dir", (Join-Path $ProjectRoot "dist\manifest")
+    ) -Activity "Geração do SBOM e hashes SHA-256"
+    Write-Host "SBOM e hashes criados em dist\manifest."
 
     if ($BuildInstaller) {
         $programFilesX86 = ${env:ProgramFiles(x86)}

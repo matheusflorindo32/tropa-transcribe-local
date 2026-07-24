@@ -10,12 +10,14 @@ a = Analysis(
     datas=[
         (str(project_root / "LICENSE"), "."),
         (str(project_root / "THIRD-PARTY-NOTICES.md"), "."),
+        (str(project_root / "packaging" / "components.json"), "."),
+        (str(project_root / "sbom.cdx.json"), "."),
     ],
     hiddenimports=[],
     hookspath=[],
     hooksconfig={},
     runtime_hooks=[],
-    excludes=["pytest", "mypy", "ruff"],
+    excludes=["pytest", "mypy", "ruff", "pip_audit"],
     noarchive=False,
     optimize=1,
 )
