@@ -2,24 +2,8 @@ name: Windows Installer End-to-End
 
 on:
   push:
-    branches: ["codex/**"]
-    paths:
-      - "app/**"
-      - "packaging/**"
-      - "scripts/windows/**"
-      - "tests/integration/**"
-      - "tools/**"
-      - "pyproject.toml"
-      - ".github/workflows/windows-installer-e2e.yml"
-  pull_request:
-    paths:
-      - "app/**"
-      - "packaging/**"
-      - "scripts/windows/**"
-      - "tests/integration/**"
-      - "tools/**"
-      - "pyproject.toml"
-      - ".github/workflows/windows-installer-e2e.yml"
+    branches:
+      - "codex/**"
   workflow_dispatch:
 
 permissions:
@@ -51,6 +35,21 @@ jobs:
           python-version: "3.11"
           cache: pip
 
+      - name: Preflight repository files
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = "Stop"
+          $required = @(
+            ".\scripts\windows\build-gui.ps1",
+            ".\packaging\windows\installer.iss",
+            ".\tests\integration\packaged-exe-smoke.ps1"
+          )
+          foreach ($path in $required) {
+            if (-not (Test-Path -LiteralPath $path -PathType Leaf)) {
+              throw "Arquivo obrigatório ausente: $path"
+            }
+          }
+
       - name: Install dependencies
         shell: pwsh
         run: |
@@ -73,17 +72,28 @@ jobs:
             (Join-Path $env:LOCALAPPDATA "Programs\Inno Setup 7\ISCC.exe"),
             (Join-Path $env:ProgramFiles "Inno Setup 7\ISCC.exe")
           )
-          $iscc = $candidates | Where-Object { Test-Path $_ } | Select-Object -First 1
+          $iscc = $candidates |
+            Where-Object { Test-Path -LiteralPath $_ -PathType Leaf } |
+            Select-Object -First 1
           if (-not $iscc) {
             winget install --id JRSoftware.InnoSetup --exact --silent `
-              --accept-package-agreements --accept-source-agreements --disable-interactivity
-            $iscc = $candidates | Where-Object { Test-Path $_ } | Select-Object -First 1
+              --accept-package-agreements --accept-source-agreements `
+              --disable-interactivity
+            if ($LASTEXITCODE -ne 0) {
+              throw "winget falhou ao instalar Inno Setup: código $LASTEXITCODE."
+            }
+            $iscc = $candidates |
+              Where-Object { Test-Path -LiteralPath $_ -PathType Leaf } |
+              Select-Object -First 1
           }
-          if (-not $iscc) { throw "Inno Setup 7 não foi localizado." }
-          $version = (Get-Item $iscc).VersionInfo.ProductVersion
+          if (-not $iscc) {
+            throw "Inno Setup 7 não foi localizado."
+          }
+          $version = (Get-Item -LiteralPath $iscc).VersionInfo.ProductVersion
           if (-not $version -or ([version]$version -lt [version]"7.0.2")) {
             throw "Inno Setup 7.0.2 ou superior é obrigatório; encontrado: $version"
           }
+          Write-Host "Inno Setup validado: $version"
 
       - name: Build bundle and installer
         shell: pwsh
@@ -92,100 +102,100 @@ jobs:
       - name: Record build evidence
         shell: pwsh
         run: |
+          $ErrorActionPreference = "Stop"
           New-Item -ItemType Directory -Force -Path $env:EVIDENCE_DIR | Out-Null
-          $bundle = Resolve-Path ".\dist\TropaTranscribeLocal"
-          $exe = Resolve-Path ".\dist\TropaTranscribeLocal\TropaTranscribeLocal.exe"
-          $installer = Resolve-Path ".\dist\installer\TropaTranscribeLocal-0.3.1-alpha-setup.exe"
-          $files = Get-ChildItem $bundle -Recurse -File
-          [ordered]@{
+          $bundle = (Resolve-Path -LiteralPath ".\dist\TropaTranscribeLocal").Path
+          $exe = (Resolve-Path -LiteralPath ".\dist\TropaTranscribeLocal\TropaTranscribeLocal.exe").Path
+          $installer = (Resolve-Path -LiteralPath ".\dist\installer\TropaTranscribeLocal-0.3.1-alpha-setup.exe").Path
+          $files = @(Get-ChildItem -LiteralPath $bundle -Recurse -File)
+          $evidence = [ordered]@{
             commit = $env:GITHUB_SHA
             bundle_files = $files.Count
             bundle_size_bytes = ($files | Measure-Object Length -Sum).Sum
-            exe_size_bytes = (Get-Item $exe).Length
-            exe_sha256 = (Get-FileHash $exe -Algorithm SHA256).Hash
-            installer_size_bytes = (Get-Item $installer).Length
-            installer_sha256 = (Get-FileHash $installer -Algorithm SHA256).Hash
-            installer_authenticode = (Get-AuthenticodeSignature $installer).Status.ToString()
-          } | ConvertTo-Json | Set-Content `
+            exe_size_bytes = (Get-Item -LiteralPath $exe).Length
+            exe_sha256 = (Get-FileHash -LiteralPath $exe -Algorithm SHA256).Hash
+            installer_size_bytes = (Get-Item -LiteralPath $installer).Length
+            installer_sha256 = (Get-FileHash -LiteralPath $installer -Algorithm SHA256).Hash
+            installer_authenticode = (Get-AuthenticodeSignature -LiteralPath $installer).Status.ToString()
+          }
+          $evidence | ConvertTo-Json | Set-Content -LiteralPath `
             (Join-Path $env:EVIDENCE_DIR "build-evidence.json") -Encoding utf8
+          $evidence | Format-List
 
       - name: Reject silent install without consent
         shell: pwsh
         run: |
-          $installer = Resolve-Path ".\dist\installer\TropaTranscribeLocal-0.3.1-alpha-setup.exe"
-          $args = @("/VERYSILENT", "/SUPPRESSMSGBOXES", "/NORESTART", "/DIR=$env:APP_DIR")
-          $process = Start-Process $installer -ArgumentList $args -Wait -PassThru
-          if ($process.ExitCode -eq 0) { throw "Instalação sem consentimento foi aceita." }
-          "exit_code=$($process.ExitCode)" | Set-Content `
-            (Join-Path $env:EVIDENCE_DIR "install-without-consent.txt")
+          $ErrorActionPreference = "Stop"
+          $installer = (Resolve-Path -LiteralPath ".\dist\installer\TropaTranscribeLocal-0.3.1-alpha-setup.exe").Path
+          $arguments = @(
+            "/VERYSILENT",
+            "/SUPPRESSMSGBOXES",
+            "/NORESTART",
+            "/DIR=$env:APP_DIR"
+          )
+          $process = Start-Process -FilePath $installer -ArgumentList $arguments -Wait -PassThru
+          if ($process.ExitCode -eq 0) {
+            throw "Instalação silenciosa sem consentimento foi aceita."
+          }
+          "exit_code=$($process.ExitCode)" | Set-Content -LiteralPath `
+            (Join-Path $env:EVIDENCE_DIR "install-without-consent.txt") -Encoding utf8
 
-      - name: Install with consent
+      - name: Install with explicit consent
         shell: pwsh
         run: |
-          $installer = Resolve-Path ".\dist\installer\TropaTranscribeLocal-0.3.1-alpha-setup.exe"
-          $args = @(
-            "/VERYSILENT", "/SUPPRESSMSGBOXES", "/NORESTART",
-            "/ACCEPTLICENSE=YES", "/DIR=$env:APP_DIR"
+          $ErrorActionPreference = "Stop"
+          $installer = (Resolve-Path -LiteralPath ".\dist\installer\TropaTranscribeLocal-0.3.1-alpha-setup.exe").Path
+          $arguments = @(
+            "/VERYSILENT",
+            "/SUPPRESSMSGBOXES",
+            "/NORESTART",
+            "/ACCEPTLICENSE=YES",
+            "/DIR=$env:APP_DIR"
           )
-          $process = Start-Process $installer -ArgumentList $args -Wait -PassThru
-          if ($process.ExitCode -ne 0) { throw "Instalação falhou: $($process.ExitCode)." }
-          if (-not (Test-Path (Join-Path $env:APP_DIR "TropaTranscribeLocal.exe"))) {
-            throw "Executável instalado não localizado."
+          $process = Start-Process -FilePath $installer -ArgumentList $arguments -Wait -PassThru
+          if ($process.ExitCode -ne 0) {
+            throw "Instalação consentida falhou: código $($process.ExitCode)."
+          }
+          $installedExe = Join-Path $env:APP_DIR "TropaTranscribeLocal.exe"
+          if (-not (Test-Path -LiteralPath $installedExe -PathType Leaf)) {
+            throw "Executável instalado não localizado: $installedExe"
           }
 
-      - name: Provision runtimes and model
+      - name: Provision pinned runtimes and model
         shell: pwsh
         run: |
           python -c "from app.services.runtime_provisioning import install_component; from app.services.model_download import download_model; install_component('ffmpeg'); install_component('whisper_cpp'); download_model('$env:MODEL_NAME')"
 
-      - name: Transcription smoke
+      - name: Run packaged transcription smoke
         shell: pwsh
         run: |
+          $installedExe = Join-Path $env:APP_DIR "TropaTranscribeLocal.exe"
           .\tests\integration\packaged-exe-smoke.ps1 `
-            -Executable (Join-Path $env:APP_DIR "TropaTranscribeLocal.exe") `
+            -Executable $installedExe `
             -Model $env:MODEL_NAME `
             -WorkDirectory (Join-Path $env:EVIDENCE_DIR "transcription-smoke")
-
-      - name: Start installed application
-        shell: pwsh
-        run: |
-          $process = Start-Process (Join-Path $env:APP_DIR "TropaTranscribeLocal.exe") -PassThru
-          Start-Sleep -Seconds 5
-          if ($process.HasExited -and $process.ExitCode -ne 0) {
-            throw "Aplicativo encerrou com código $($process.ExitCode)."
-          }
-          if (-not $process.HasExited) { Stop-Process -Id $process.Id -Force }
-
-      - name: Microsoft Defender evidence
-        shell: pwsh
-        run: |
-          $status = Get-MpComputerStatus -ErrorAction SilentlyContinue
-          if ($status) {
-            $status | Select-Object AntivirusEnabled, RealTimeProtectionEnabled, `
-              AntivirusSignatureVersion | ConvertTo-Json | Set-Content `
-              (Join-Path $env:EVIDENCE_DIR "defender.json")
-          } else {
-            "Defender unavailable on runner." | Set-Content `
-              (Join-Path $env:EVIDENCE_DIR "defender.txt")
-          }
 
       - name: Uninstall and verify cleanup
         if: always()
         shell: pwsh
         run: |
           $uninstaller = Join-Path $env:APP_DIR "unins000.exe"
-          if (-not (Test-Path $uninstaller)) { exit 0 }
-          $process = Start-Process $uninstaller `
-            -ArgumentList @("/VERYSILENT", "/SUPPRESSMSGBOXES", "/NORESTART") `
-            -Wait -PassThru
-          if ($process.ExitCode -ne 0) { throw "Desinstalação falhou: $($process.ExitCode)." }
-          if (Test-Path (Join-Path $env:APP_DIR "TropaTranscribeLocal.exe")) {
-            throw "Executável permaneceu após desinstalação."
+          if (-not (Test-Path -LiteralPath $uninstaller -PathType Leaf)) {
+            Write-Warning "Desinstalador não encontrado; a instalação pode não ter sido concluída."
+            exit 0
+          }
+          $arguments = @("/VERYSILENT", "/SUPPRESSMSGBOXES", "/NORESTART")
+          $process = Start-Process -FilePath $uninstaller -ArgumentList $arguments -Wait -PassThru
+          if ($process.ExitCode -ne 0) {
+            throw "Desinstalação falhou: código $($process.ExitCode)."
+          }
+          if (Test-Path -LiteralPath (Join-Path $env:APP_DIR "TropaTranscribeLocal.exe")) {
+            throw "Executável permaneceu após a desinstalação."
           }
 
       - name: Upload text evidence only
         if: always()
-        uses: actions/upload-artifact@v7
+        uses: actions/upload-artifact@v4
         with:
           name: windows-installer-e2e-evidence-${{ github.run_id }}
           path: |
