@@ -1,6 +1,6 @@
 # ADR 0001 — Limite de binários externos no desktop
 
-- Status: aceito para `v0.3.0-alpha`
+- Status: atualizado para `v0.3.1-alpha`
 - Data: 2026-07-24
 
 ## Contexto
@@ -14,12 +14,12 @@ ter origem, versão, hash e licença confirmados por artefato.
 
 O bundle experimental incorpora somente o aplicativo, o runtime Python, Qt/
 PySide6 e o bootloader do PyInstaller. FFmpeg, `whisper-cli` e modelos não são
-incorporados nesta fase. A GUI diagnostica a ausência desses componentes e o
-gerenciador baixa modelos somente após ação do usuário.
+incorporados nesta fase. O assistente baixa componentes somente após ação do
+usuário, usando manifesto fixo, tamanhos/hashes exatos, staging e diagnóstico.
 
 ## Consequências
 
-O executável abre sem Python, mas uma máquina limpa ainda não transcreve até que
-o runtime externo compatível seja provisionado. Esse é um bloqueador explícito
-para beta pública, não um motivo para reduzir validações ou instalar ferramentas
-globais silenciosamente.
+O executável abre sem Python e o usuário consegue preparar a máquina sem
+toolchain. O primeiro uso ainda precisa de rede e espaço para os downloads. A
+publicação segue bloqueada até a validação completa em Windows 11 limpo,
+assinatura, Defender/SmartScreen e revisão das licenças concretas.

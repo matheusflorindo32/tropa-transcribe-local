@@ -23,6 +23,10 @@ exclusões, assinatura Authenticode, teste sem Python instalado, avisos Qt,
 origens/licenças de FFmpeg e whisper.cpp, hashes e política de atualização.
 Nenhum binário foi publicado nesta entrega.
 
+O instalador `v0.3.1-alpha` contém somente app/bootstrap. FFmpeg, whisper.cpp e
+modelo são downloads posteriores, explícitos e verificados pelo manifesto
+incorporado. O modelo não aumenta o tamanho do instalador.
+
 ## Estrutura preparada
 
 - `packaging/windows/tropa-transcribe-local.spec`: bundle PyInstaller `onedir`;
@@ -40,16 +44,19 @@ Para gerar artefatos exclusivamente locais:
 .\scripts\windows\build-gui.ps1 -BuildInstaller
 ```
 
-O bundle atual contém a GUI e avisos autorais, mas não inclui FFmpeg,
-whisper.cpp nem modelos. PyInstaller precisa ser executado no Windows para
-produzir um pacote Windows. `ISCC.exe` deve retornar `0`; códigos `1` e `2` são
-tratados como falha.
+O bundle contém GUI, bootstrap, manifesto, inventário, SBOM e avisos, mas não
+inclui FFmpeg, whisper.cpp nem modelos. PyInstaller precisa ser executado no
+Windows para produzir pacote Windows. Inno Setup 7.0.2 ou superior é validado;
+`ISCC.exe` deve retornar `0`, e o script confirma a existência do artefato,
+registra SHA-256 e deixa explícita a ausência de assinatura.
+
+O Inno Setup 7.0.2 usado localmente informa `Non-commercial use only`.
+Licenciamento comercial da ferramenta é bloqueio independente antes de uma
+distribuição comercial.
 
 ## Bloqueios para distribuição
 
-Uma build local de 113,01 MiB foi produzida e abriu em smoke; consulte
-[`validacao-desktop-build-local.md`](validacao-desktop-build-local.md). O pacote
-ainda não foi validado em Windows limpo. Permanecem obrigatórios:
+O pacote ainda não foi validado em Windows 11 limpo. Permanecem obrigatórios:
 teste visual/acessível da GUI, teste sem Python, antivírus, SBOM, hashes,
 SmartScreen, instalador/desinstalação, assinatura Authenticode, política de atualização e revisão das obrigações de
 Qt/PySide6 e de cada binário incorporado futuramente.

@@ -25,6 +25,10 @@ def test_temporary_workspace_can_be_kept(tmp_path: Path) -> None:
 
 def test_missing_executables(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setattr("shutil.which", lambda _: None)
+    monkeypatch.setattr(
+        "app.services.runtime_provisioning.validate_component",
+        lambda _name: (_ for _ in ()).throw(FileNotFoundError()),
+    )
     monkeypatch.setattr("app.services.ffmpeg.default_data_dir", lambda: tmp_path)
     monkeypatch.setattr("app.transcription.whisper_cpp._installed_whisper_candidates", list)
     with pytest.raises(FileNotFoundError, match="FFmpeg"):
@@ -43,6 +47,10 @@ def test_ffmpeg_falls_back_to_installation_manifest(
         encoding="utf-8",
     )
     monkeypatch.setattr("shutil.which", lambda _: None)
+    monkeypatch.setattr(
+        "app.services.runtime_provisioning.validate_component",
+        lambda _name: (_ for _ in ()).throw(FileNotFoundError()),
+    )
     monkeypatch.setattr("app.services.ffmpeg.default_data_dir", lambda: tmp_path)
     assert resolve_ffmpeg() == executable.resolve()
 
@@ -77,6 +85,20 @@ def test_model_rejects_recorded_sha256_mismatch(
         validate_model_file(model, "base")
 
 
+def test_managed_model_without_sidecar_is_rejected(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    models_dir = tmp_path / "models"
+    models_dir.mkdir()
+    monkeypatch.setattr("app.services.models.default_models_dir", lambda: models_dir)
+    monkeypatch.setattr("app.services.models.minimum_model_bytes", lambda _: 1)
+    model = models_dir / model_filename("tiny-q5_1")
+    model.write_bytes(b"x" * (29 * 1024**2))
+
+    with pytest.raises(ValueError, match="registro de integridade confiável"):
+        validate_model_file(model, "tiny-q5_1")
+
+
 def test_whisper_cli_falls_back_to_installed_candidate(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
@@ -84,6 +106,10 @@ def test_whisper_cli_falls_back_to_installed_candidate(
     executable.parent.mkdir(parents=True)
     executable.write_bytes(b"x")
     monkeypatch.setattr("shutil.which", lambda _: None)
+    monkeypatch.setattr(
+        "app.services.runtime_provisioning.validate_component",
+        lambda _name: (_ for _ in ()).throw(FileNotFoundError()),
+    )
     monkeypatch.setattr(
         "app.transcription.whisper_cpp._installed_whisper_candidates",
         lambda: [executable],

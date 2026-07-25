@@ -8,24 +8,31 @@
     "component": {
       "type": "application",
       "name": "Tropa Transcribe Local",
-      "version": "0.3.0-alpha"
+      "version": "0.3.1-alpha"
     }
   },
   "components": [
     {
+      "type": "application",
+      "name": "Tropa Transcribe Local",
+      "version": "0.3.1-alpha",
+      "licenses": [{"expression": "MIT"}],
+      "properties": [{"name": "tropa:incorporated", "value": "true"}]
+    },
+    {
       "type": "library",
       "name": "Python",
-      "version": "3.11",
+      "version": "3.11.15",
       "licenses": [{"expression": "PSF-2.0"}],
       "properties": [{"name": "tropa:incorporated", "value": "true"}]
     },
     {
       "type": "library",
       "name": "PySide6 / Qt for Python",
-      "version": ">=6.8,<7",
+      "version": "6.11.1",
       "licenses": [
         {
-          "expression": "LGPL-3.0-only OR GPL-3.0-only OR LicenseRef-Qt-Commercial"
+          "expression": "LGPL-3.0-only OR GPL-2.0-only OR GPL-3.0-only"
         }
       ],
       "properties": [{"name": "tropa:incorporated", "value": "true"}]
@@ -33,15 +40,21 @@
     {
       "type": "library",
       "name": "PyInstaller",
-      "version": ">=6.21,<7",
-      "licenses": [{"expression": "GPL-2.0-only WITH Bootloader-exception"}],
+      "version": "6.21.0",
+      "licenses": [
+        {
+          "license": {
+            "name": "GPL-2.0-or-later WITH Bootloader-exception"
+          }
+        }
+      ],
       "properties": [{"name": "tropa:incorporated", "value": "true"}]
     },
     {
       "type": "library",
       "name": "FFmpeg",
-      "version": "external",
-      "licenses": [{"expression": "LGPL-2.1-or-later OR GPL-2.0-or-later"}],
+      "version": "n8.1.2-31-g8c9502e9b0",
+      "licenses": [{"expression": "LGPL-3.0-or-later"}],
       "properties": [{"name": "tropa:incorporated", "value": "false"}]
     },
     {
@@ -49,6 +62,20 @@
       "name": "whisper.cpp",
       "version": "v1.9.1",
       "licenses": [{"expression": "MIT"}],
+      "properties": [{"name": "tropa:incorporated", "value": "false"}]
+    },
+    {
+      "type": "library",
+      "name": "Whisper model weights",
+      "version": "5359861c739e955e79d9a303bcbc70fb988958b1",
+      "licenses": [{"expression": "MIT"}],
+      "properties": [{"name": "tropa:incorporated", "value": "false"}]
+    },
+    {
+      "type": "library",
+      "name": "Inno Setup",
+      "version": "7.0.2",
+      "licenses": [{"license": {"name": "Inno Setup License"}}],
       "properties": [{"name": "tropa:incorporated", "value": "false"}]
     }
   ]

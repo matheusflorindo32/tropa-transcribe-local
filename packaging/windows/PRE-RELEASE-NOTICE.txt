@@ -1,14 +1,16 @@
 VERSÃO ALPHA EXPERIMENTAL PARA VALIDAÇÃO
 
-Este pacote contém somente a interface Python empacotada. Nesta fase, FFmpeg,
-whisper.cpp e modelos não são incorporados. Nenhum instalador executável deve
+Este pacote contém o aplicativo e o bootstrap. FFmpeg, whisper.cpp e modelos
+não são incorporados; o assistente solicita consentimento antes de baixá-los
+para o perfil do usuário e valida tamanho e SHA-256. Nenhum instalador deve
 ser publicado antes dos testes documentados em Windows limpo, da revisão de
 licenças e da análise de assinatura e segurança.
 
 O projeto é independente, não solicita credenciais, não desativa o Microsoft
-Defender ou o SmartScreen e não instala FFmpeg, whisper.cpp, Git, CMake ou
-outras ferramentas globais silenciosamente.
+Defender ou o SmartScreen e não instala Git, CMake, Visual Studio, Python
+global ou outras ferramentas globais silenciosamente.
 
 O aplicativo não cria conta, não contém telemetria e não envia mídias. O
 usuário escolhe a pasta de instalação e a pasta das transcrições. A
-desinstalação preserva transcrições; a exclusão dos modelos é opcional.
+desinstalação preserva transcrições; a exclusão separada dos runtimes e modelos
+é opcional. Instalação silenciosa exige `/ACCEPTLICENSE=YES`.

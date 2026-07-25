@@ -1,51 +1,73 @@
-# Checklist de teste em Windows limpo
+# Checklist de teste em Windows 11 limpo
 
-Use uma VM ou máquina sem instalação anterior do Tropa Transcribe Local.
+Use snapshot de VM ou máquina física sem instalação anterior do aplicativo.
 Registre versões e resultados sem anexar mídia, transcrição ou caminhos
 sensíveis.
 
-## Preparação
+## Estado inicial
 
-- [ ] Windows 11 x64 atualizado, conta sem privilégios administrativos.
-- [ ] Git, CMake, Python 3.11/3.12 e FFmpeg obtidos de fontes confiáveis.
-- [ ] Visual Studio Build Tools 2022 com **Desktop development with C++**.
-- [ ] Pelo menos 10 GiB livres e 8 GiB de RAM para testar o modelo `small`.
-- [ ] Repositório em caminho local com espaços, por exemplo
-  `C:\Projetos de teste\tropa-transcribe-local`.
+- [ ] Windows 11 x64 atualizado e conta padrão sem privilégio administrativo.
+- [ ] Python, Git, CMake, Visual Studio Build Tools, FFmpeg, whisper.cpp e
+  modelos não estão instalados.
+- [ ] Pelo menos 3 GiB livres para app, runtimes, temporários e modelo `small`.
+- [ ] Defender ativo; SmartScreen na política normal do ambiente.
+- [ ] Proxy/rede e data/hora registrados sem expor credenciais.
 
-## Instalação e idempotência
+## Instalador
 
-- [ ] `instalar.ps1 -Model small` retorna `0`.
-- [ ] O CMake registra `Visual Studio 17 2022`, nunca NMake.
-- [ ] `installation.json` contém versão, ambiente e caminhos existentes.
-- [ ] `ggml-small.bin` está somente no diretório `models` configurado.
-- [ ] O SHA-256 do modelo corresponde ao arquivo.
-- [ ] Uma segunda execução reutiliza clone, venv, build e modelo íntegros.
-- [ ] Uma falha induzida de CMake retorna código diferente de zero e não exibe
-  sucesso.
-- [ ] Um download interrompido não deixa `ggml-small.bin` parcial.
+- [ ] Hash do instalador interno confere com o relatório de build.
+- [ ] Instalação interativa por usuário não pede elevação.
+- [ ] Instalação silenciosa sem `/ACCEPTLICENSE=YES` é recusada.
+- [ ] Instalação silenciosa controlada instala somente app/bootstrap.
+- [ ] Aplicativo abre sem Python e sem DLL/toolchain global.
+- [ ] Atualização/reparo não remove configurações nem transcrições.
+- [ ] Desinstalação oferece runtimes e modelos separadamente.
+- [ ] Saídas/transcrições permanecem após desinstalação.
 
-## Funcional
+## Primeiro uso
 
-- [ ] `verificar.ps1` retorna `0`.
-- [ ] `windows-real-smoke.ps1 -Model small` retorna `0`.
-- [ ] OGG/Opus do WhatsApp autorizado gera TXT, SRT e VTT.
-- [ ] Caminhos com espaços, acentos e arquivo grande plausível funcionam.
-- [ ] Erro do `whisper-cli` é propagado sem mensagem de conclusão.
-- [ ] Temporários são removidos por padrão e preservados com `-KeepTemp`.
+- [ ] O assistente declara processamento local e ausência de upload/telemetria.
+- [ ] Componentes, tamanhos, espaço livre, licenças e pastas estão visíveis.
+- [ ] Nenhum download começa antes do consentimento.
+- [ ] `small` aparece recomendado e cabe no espaço disponível.
+- [ ] Cancelamento remove `.part`, staging e não informa sucesso.
+- [ ] Retomar após cancelamento conclui com clareza.
+- [ ] Segunda execução reutiliza componentes íntegros.
+- [ ] Reparar substitui somente após download/validação completa.
+- [ ] Diagnósticos de FFmpeg e whisper.cpp retornam sucesso.
 
-## GUI e pacote
+## Segurança e falhas induzidas
 
-- [ ] Bundle PyInstaller `onedir` abre sem Python global.
-- [ ] Loading, sucesso, vazio, erro e cancelamento são testados.
-- [ ] Teclado, foco, contraste, leitor de tela e escala de 125/150% são revistos.
-- [ ] Inno Setup instala por usuário, atualiza, repara e desinstala.
-- [ ] Nenhum modelo, FFmpeg ou whisper.cpp foi incorporado acidentalmente.
-- [ ] Defender e serviço antivírus institucional não detectam ameaça.
-- [ ] SBOM, hashes, assinatura Authenticode e licenças foram revistos.
+- [ ] URL HTTP, host/redirecionamento não permitido e manifesto adulterado são
+  bloqueados.
+- [ ] SHA-256/tamanho incorreto, ZIP truncado, traversal, symlink e nome
+  ambíguo são bloqueados.
+- [ ] DLL/arquivo inesperado no runtime reprova a validação.
+- [ ] Queda de rede, timeout, proxy inválido e interrupção deixam estado
+  anterior utilizável.
+- [ ] Espaço insuficiente é detectado antes do download.
+- [ ] Caminhos graváveis não permitem carregar componente não inventariado.
+- [ ] Defender não detecta ameaça; resultado e definições são registrados.
+- [ ] SmartScreen é registrado sem contornar a proteção.
 
-## Evidência final
+## Transcrição real pelo EXE instalado
 
-- [ ] Versões e data registradas em `docs/validacao-windows-real.md`.
-- [ ] Limitações e resultados reprovados permanecem explícitos.
-- [ ] Nenhum binário é publicado antes de todos os itens críticos aprovarem.
+- [ ] Gere áudio sintético ou use OGG/Opus autorizado sem dados sensíveis.
+- [ ] Adicione mídia por seletor e drag-and-drop.
+- [ ] Execute CPU/idioma `pt`/modelo `small`.
+- [ ] TXT, SRT, VTT e JSON são criados e não vazios.
+- [ ] Progresso, cancelamento e erros não bloqueiam a interface.
+- [ ] Caminhos com espaços e Unicode funcionam.
+- [ ] Revise que mídia/transcrição não aparecem em logs ou diagnóstico.
+
+## UX, acessibilidade e evidência
+
+- [ ] Teclado, ordem de foco, leitor de tela, contraste e escalas 100/125/150%
+  são revistos.
+- [ ] Estados vazio, carregando, sucesso, erro, cancelado e reparo são claros.
+- [ ] Sobre mostra versões, licenças, origem e ausência de afiliação.
+- [ ] SBOM, inventário, manifesto e arquivos `LICENSES` acompanham o pacote.
+- [ ] Tamanho do app, instalador, runtimes e modelo são registrados.
+- [ ] Limitações e resultados reprovados constam na validação.
+- [ ] Nenhum executável, instalador, tag, release ou bundle é publicado antes
+  de todos os itens críticos aprovarem.

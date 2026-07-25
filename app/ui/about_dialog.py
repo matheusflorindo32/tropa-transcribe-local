@@ -16,9 +16,14 @@ class AboutDialog(QDialog):
             f"<h2>Tropa Transcribe Local {__version__}</h2>"
             "<p>Projeto independente da Tropa Científica, sem afiliação oficial com "
             "OpenAI, ggml-org, Qt ou FFmpeg.</p>"
-            "<p>O código autoral usa MIT. PySide6/Qt usa LGPL-3.0/GPL-3.0 ou licença "
-            "comercial; PyInstaller usa GPL-2.0 com exceção; whisper.cpp e Whisper usam "
-            "MIT. A licença da build de FFmpeg depende da configuração específica.</p>"
+            "<p><b>Componentes incorporados:</b> Python 3.11 (PSF-2.0), PySide6/Qt 6 "
+            "(LGPL-3.0-only OR GPL-2.0-only OR GPL-3.0-only) e bootloader PyInstaller "
+            "(GPL-2.0-or-later com Bootloader Exception).</p>"
+            "<p><b>Downloads opcionais:</b> whisper.cpp v1.9.1 e pesos Whisper (MIT); "
+            "FFmpeg n8.1.2-31 shared do FFmpeg-Builds (LGPL-3.0-or-later conforme "
+            "manifesto fixado).</p>"
+            "<p>As bibliotecas Qt são distribuídas dinamicamente e não foram modificadas. "
+            "Os avisos, inventário, SBOM e instruções de substituição acompanham o pacote.</p>"
             "<p>Sem conta, telemetria ou upload. O conteúdo permanece no computador.</p>"
         )
         text.setWordWrap(True)

@@ -14,6 +14,8 @@ from app import __version__
 from app.config import default_data_dir
 from app.services.ffmpeg import resolve_ffmpeg
 from app.services.models import default_models_dir, validate_model_file
+from app.services.runtime_manifest import ManifestError, load_runtime_manifest
+from app.services.runtime_provisioning import default_runtime_dir
 from app.transcription.whisper_cpp import resolve_whisper_cli
 
 
@@ -111,6 +113,18 @@ def build_diagnostic(model: str) -> DiagnosticReport:
         model_status = f"ausente ({model})"
     except ValueError:
         model_status = f"corrompido ou incompleto ({model})"
+    try:
+        runtime_manifest = load_runtime_manifest()
+        manifest_status = (
+            f"{runtime_manifest.release}; SHA-256 {runtime_manifest.digest[:12]}…; "
+            f"verificado em {runtime_manifest.verified_at}"
+        )
+        component_versions = ", ".join(
+            f"{item.name} {item.version}" for item in runtime_manifest.components.values()
+        )
+    except ManifestError:
+        manifest_status = "inválido — não use downloads nem runtimes"
+        component_versions = "indisponíveis"
     values = {
         "Aplicativo": __version__,
         "Instalação registrada": installation_version(),
@@ -122,6 +136,9 @@ def build_diagnostic(model: str) -> DiagnosticReport:
         "whisper-cli": whisper_status,
         "whisper.cpp": _whisper_version(whisper_path),
         "Modelo": model_status,
+        "Manifesto de runtime": manifest_status,
+        "Componentes fixados": component_versions,
+        "Runtime local": str(default_runtime_dir()),
         "Dados": str(data_dir),
         "Modelos": str(models_dir),
         "Configuração": str(data_dir / "config.json"),

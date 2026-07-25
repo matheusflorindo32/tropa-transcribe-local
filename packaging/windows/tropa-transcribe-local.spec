@@ -12,6 +12,13 @@ a = Analysis(
         (str(project_root / "THIRD-PARTY-NOTICES.md"), "."),
         (str(project_root / "packaging" / "components.json"), "."),
         (str(project_root / "sbom.cdx.json"), "."),
+        (
+            str(project_root / "app" / "resources" / "runtime-windows-x64.json"),
+            "app/resources",
+        ),
+        (str(project_root / "docs" / "licencas.md"), "docs"),
+        (str(project_root / "docs" / "componentes-runtime-windows.md"), "docs"),
+        (str(project_root / "LICENSES"), "LICENSES"),
     ],
     hiddenimports=[],
     hookspath=[],

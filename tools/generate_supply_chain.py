@@ -29,6 +29,16 @@ def load_components(path: Path) -> dict[str, Any]:
     return payload
 
 
+def cyclonedx_licenses(value: str) -> list[dict[str, Any]]:
+    """Usa expressão SPDX quando possível e nome para licenças customizadas."""
+    if value in {
+        "GPL-2.0-or-later WITH Bootloader-exception",
+        "Inno Setup License",
+    }:
+        return [{"license": {"name": value}}]
+    return [{"expression": value}]
+
+
 def create_sbom(manifest: dict[str, Any]) -> dict[str, Any]:
     components = []
     for item in manifest["components"]:
@@ -49,7 +59,7 @@ def create_sbom(manifest: dict[str, Any]) -> dict[str, Any]:
                 "type": "application" if item["name"] == "Tropa Transcribe Local" else "library",
                 "name": item["name"],
                 "version": version,
-                "licenses": [{"expression": license_expression}],
+                "licenses": cyclonedx_licenses(license_expression),
                 "properties": [
                     {"name": "tropa:incorporated", "value": str(item["incorporated"]).lower()},
                     {"name": "tropa:purpose", "value": item["purpose"]},

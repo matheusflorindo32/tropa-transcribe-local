@@ -88,11 +88,19 @@ def _load_checksum_manifest(path: Path) -> dict[str, Any] | None:
     return payload
 
 
+def _is_managed_model_path(path: Path) -> bool:
+    try:
+        return path.parent.resolve() == default_models_dir().expanduser().resolve()
+    except OSError:
+        return False
+
+
 def validate_model_file(
     path: Path,
     name: str,
     *,
     verify_recorded_sha256: bool = True,
+    require_trusted_record: bool | None = None,
 ) -> Path:
     candidate = path.expanduser().resolve()
     normalized = validate_model_name(name)
@@ -107,13 +115,46 @@ def validate_model_file(
             f"O modelo '{normalized}' parece incompleto: {actual_mib:.1f} MiB; "
             f"mínimo plausível {minimum_mib} MiB."
         )
+
+    trusted_record_required = (
+        _is_managed_model_path(candidate)
+        if require_trusted_record is None
+        else require_trusted_record
+    )
     metadata = _load_checksum_manifest(candidate)
-    if verify_recorded_sha256 and metadata:
-        recorded = metadata.get("sha256")
-        if not isinstance(recorded, str) or len(recorded) != 64:
-            raise ValueError("O SHA-256 registrado para o modelo é inválido.")
-        if calculate_sha256(candidate) != recorded.lower():
-            raise ValueError("O SHA-256 do modelo não corresponde ao registro local.")
+    if trusted_record_required and metadata is None:
+        raise ValueError(
+            f"O modelo gerenciado '{normalized}' não possui registro de integridade confiável. "
+            "Repare ou baixe o modelo novamente."
+        )
+    if not verify_recorded_sha256 or metadata is None:
+        return candidate
+
+    recorded = metadata.get("sha256")
+    if not isinstance(recorded, str) or len(recorded) != 64:
+        raise ValueError("O SHA-256 registrado para o modelo é inválido.")
+    recorded = recorded.lower()
+
+    if trusted_record_required:
+        if metadata.get("schema_version") != 2:
+            raise ValueError("O registro do modelo gerenciado não usa o esquema confiável atual.")
+        from app.services.runtime_manifest import load_runtime_manifest, model_spec
+
+        trusted_manifest = load_runtime_manifest()
+        trusted = model_spec(normalized)
+        if (
+            recorded != trusted.sha256
+            or actual_size != trusted.size_bytes
+            or metadata.get("file") != trusted.filename
+            or metadata.get("size_bytes") != trusted.size_bytes
+            or metadata.get("runtime_manifest_sha256") != trusted_manifest.digest
+            or metadata.get("verified_exact_size") is not True
+            or metadata.get("verified_sha256") is not True
+        ):
+            raise ValueError("O registro local diverge do manifesto confiável do modelo.")
+
+    if calculate_sha256(candidate) != recorded:
+        raise ValueError("O SHA-256 do modelo não corresponde ao registro local.")
     return candidate
 
 
@@ -125,7 +166,11 @@ def resolve_model(name: str, explicit_path: Path | None = None) -> Path:
         else default_models_dir() / model_filename(normalized)
     )
     try:
-        return validate_model_file(candidate, normalized)
+        return validate_model_file(
+            candidate,
+            normalized,
+            require_trusted_record=explicit_path is None,
+        )
     except FileNotFoundError as exc:
         raise FileNotFoundError(
             f"Modelo '{normalized}' não encontrado. "

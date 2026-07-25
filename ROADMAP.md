@@ -29,10 +29,17 @@ diagnóstico redigido, gerenciador de modelos, SBOM e empacotamento `onedir`.
 Publicação binária bloqueada até Windows limpo, Defender, assinatura, licenças e
 runtime externo serem validados.
 
+### 0.3.1-alpha
+
+Provisionamento Windows x64 sem toolchain, manifesto confiável, assistente de
+primeiro uso, reparo, cancelamento e instalador experimental app/bootstrap.
+Artefatos permanecem locais até validação integral em Windows 11 limpo,
+Defender/SmartScreen, assinatura e revisão de licenças.
+
 ### 0.3 estável
 
-Provisionamento seguro de FFmpeg/whisper.cpp sem Python/Git/CMake, atualização
-assistida, Authenticode e validação completa de instalação/desinstalação.
+Atualização assistida, Authenticode e validação completa de
+instalação/desinstalação.
 Glossários e perfis permanecem planejados.
 
 ## 0.4

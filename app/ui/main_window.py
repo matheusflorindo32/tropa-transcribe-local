@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from PySide6.QtCore import Qt, QThread, QUrl
+from PySide6.QtCore import Qt, QThread, QTimer, QUrl
 from PySide6.QtGui import QDesktopServices, QDragEnterEvent, QDropEvent, QGuiApplication
 from PySide6.QtWidgets import (
     QCheckBox,
@@ -32,6 +32,11 @@ from app.services.queue import QueueStatus, TranscriptionQueue
 from app.transcription.engine import TranscriptionEngine, TranscriptionRequest
 from app.ui.about_dialog import AboutDialog
 from app.ui.diagnostics_dialog import DiagnosticsDialog
+from app.ui.first_run_wizard import (
+    FirstRunWizard,
+    needs_first_run,
+    should_open_automatically,
+)
 from app.ui.model_manager_dialog import ModelManagerDialog
 from app.ui.workers import TranscriptionWorker
 
@@ -54,7 +59,10 @@ class MainWindow(QMainWindow):
         self.generated: list[Path] = []
         self.thread: QThread | None = None
         self.worker: TranscriptionWorker | None = None
+        self.setup_wizard: FirstRunWizard | None = None
         self._build_ui()
+        if should_open_automatically():
+            QTimer.singleShot(0, self._offer_first_run)
 
     def _build_ui(self) -> None:
         config = load_config()
@@ -180,6 +188,8 @@ class MainWindow(QMainWindow):
         open_button.clicked.connect(self._open_output)
         diagnostic = QPushButton("&Diagnóstico")
         diagnostic.clicked.connect(self._show_diagnostics)
+        setup = QPushButton("&Configurar componentes")
+        setup.clicked.connect(self._show_setup)
         models = QPushButton("&Modelos")
         models.clicked.connect(self._show_models)
         about = QPushButton("S&obre")
@@ -189,6 +199,7 @@ class MainWindow(QMainWindow):
         actions.addWidget(open_button)
         actions.addStretch()
         actions.addWidget(diagnostic)
+        actions.addWidget(setup)
         actions.addWidget(models)
         actions.addWidget(about)
         layout.addLayout(actions)
@@ -398,6 +409,23 @@ class MainWindow(QMainWindow):
 
     def _show_diagnostics(self) -> None:
         DiagnosticsDialog(self.model.currentText(), self).exec()
+
+    def _offer_first_run(self) -> None:
+        if needs_first_run(self.model.currentText()):
+            self._show_setup()
+
+    def _show_setup(self) -> None:
+        if self.setup_wizard is not None:
+            self.setup_wizard.raise_()
+            self.setup_wizard.activateWindow()
+            return
+        self.setup_wizard = FirstRunWizard(self)
+        self.setup_wizard.finished.connect(self._setup_closed)
+        self.setup_wizard.open()
+
+    def _setup_closed(self) -> None:
+        self.setup_wizard = None
+        self._update_model_info(self.model.currentText())
 
     def _show_models(self) -> None:
         dialog = ModelManagerDialog(

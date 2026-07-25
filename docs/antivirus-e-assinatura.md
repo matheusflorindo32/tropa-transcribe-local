@@ -30,7 +30,11 @@ Não armazene PFX, senha ou segredo de assinatura no repositório. Certificados
 OV/EV e serviços gerenciados têm custos, validação de identidade e requisitos
 variáveis; obtenha cotação atual do fornecedor. Assinatura melhora identidade e
 integridade, mas uma versão nova ainda pode apresentar aviso de reputação do
-SmartScreen. O resultado atual do projeto é **não testado e não assinado**.
+SmartScreen. Em 2026-07-24, o host de desenvolvimento executou scans
+personalizados com Defender ativo (definição `1.455.328.0`) no bundle e no
+instalador e não registrou detecção recente. Isso não substitui a repetição na
+VM limpa. O instalador atual permanece **NotSigned** e o SmartScreen ainda não
+foi validado.
 
 Fontes oficiais: documentação do
 [SignTool](https://learn.microsoft.com/windows/win32/seccrypto/signtool) e de
