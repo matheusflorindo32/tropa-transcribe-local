@@ -43,3 +43,119 @@ jobs:
           tests/test_gui_workers.py
           tests/test_gui_window.py
           tests/test_first_run_wizard.py
+
+  windows-installer-e2e:
+    name: Windows installer E2E
+    runs-on: windows-latest
+    timeout-minutes: 90
+    env:
+      PYTHONUTF8: "1"
+      QT_QPA_PLATFORM: offscreen
+      MODEL_NAME: tiny-q5_1
+      APP_DIR: ${{ runner.temp }}\TropaTranscribeLocal-E2E
+      EVIDENCE_DIR: ${{ runner.temp }}\tropa-e2e-evidence
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.11"
+          cache: pip
+      - name: Install dependencies
+        shell: pwsh
+        run: |
+          python -m pip install --upgrade "pip>=26.1.2" "setuptools>=83.0.0"
+          python -m pip install -e ".[dev,gui-test,packaging]"
+      - name: Install Inno Setup 7
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = "Stop"
+          $candidates = @(
+            (Join-Path $env:LOCALAPPDATA "Programs\Inno Setup 7\ISCC.exe"),
+            (Join-Path $env:ProgramFiles "Inno Setup 7\ISCC.exe")
+          )
+          $iscc = $candidates | Where-Object { Test-Path $_ } | Select-Object -First 1
+          if (-not $iscc) {
+            winget install --id JRSoftware.InnoSetup --exact --silent `
+              --accept-package-agreements --accept-source-agreements --disable-interactivity
+            $iscc = $candidates | Where-Object { Test-Path $_ } | Select-Object -First 1
+          }
+          if (-not $iscc) { throw "Inno Setup 7 não foi localizado." }
+      - name: Build bundle and installer
+        shell: pwsh
+        run: .\scripts\windows\build-gui.ps1 -BuildInstaller
+      - name: Record build evidence
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force -Path $env:EVIDENCE_DIR | Out-Null
+          $bundle = Resolve-Path ".\dist\TropaTranscribeLocal"
+          $exe = Resolve-Path ".\dist\TropaTranscribeLocal\TropaTranscribeLocal.exe"
+          $installer = Resolve-Path ".\dist\installer\TropaTranscribeLocal-0.3.1-alpha-setup.exe"
+          $files = Get-ChildItem $bundle -Recurse -File
+          [ordered]@{
+            commit = $env:GITHUB_SHA
+            bundle_files = $files.Count
+            bundle_size_bytes = ($files | Measure-Object Length -Sum).Sum
+            exe_size_bytes = (Get-Item $exe).Length
+            exe_sha256 = (Get-FileHash $exe -Algorithm SHA256).Hash
+            installer_size_bytes = (Get-Item $installer).Length
+            installer_sha256 = (Get-FileHash $installer -Algorithm SHA256).Hash
+            installer_authenticode = (Get-AuthenticodeSignature $installer).Status.ToString()
+          } | ConvertTo-Json | Set-Content `
+            (Join-Path $env:EVIDENCE_DIR "build-evidence.json") -Encoding utf8
+      - name: Reject silent install without consent
+        shell: pwsh
+        run: |
+          $installer = Resolve-Path ".\dist\installer\TropaTranscribeLocal-0.3.1-alpha-setup.exe"
+          $args = @("/VERYSILENT", "/SUPPRESSMSGBOXES", "/NORESTART", "/DIR=$env:APP_DIR")
+          $process = Start-Process $installer -ArgumentList $args -Wait -PassThru
+          if ($process.ExitCode -eq 0) { throw "Instalação sem consentimento foi aceita." }
+      - name: Install with consent
+        shell: pwsh
+        run: |
+          $installer = Resolve-Path ".\dist\installer\TropaTranscribeLocal-0.3.1-alpha-setup.exe"
+          $args = @(
+            "/VERYSILENT", "/SUPPRESSMSGBOXES", "/NORESTART",
+            "/ACCEPTLICENSE=YES", "/DIR=$env:APP_DIR"
+          )
+          $process = Start-Process $installer -ArgumentList $args -Wait -PassThru
+          if ($process.ExitCode -ne 0) { throw "Instalação falhou: $($process.ExitCode)." }
+          if (-not (Test-Path (Join-Path $env:APP_DIR "TropaTranscribeLocal.exe"))) {
+            throw "Executável instalado não localizado."
+          }
+      - name: Provision runtimes and model
+        shell: pwsh
+        run: |
+          python -c "from app.services.runtime_provisioning import install_component; from app.services.model_download import download_model; install_component('ffmpeg'); install_component('whisper_cpp'); download_model('$env:MODEL_NAME')"
+      - name: Transcription smoke
+        shell: pwsh
+        run: |
+          .\tests\integration\packaged-exe-smoke.ps1 `
+            -Executable (Join-Path $env:APP_DIR "TropaTranscribeLocal.exe") `
+            -Model $env:MODEL_NAME `
+            -WorkDirectory (Join-Path $env:EVIDENCE_DIR "transcription-smoke")
+      - name: Uninstall and verify cleanup
+        if: always()
+        shell: pwsh
+        run: |
+          $uninstaller = Join-Path $env:APP_DIR "unins000.exe"
+          if (-not (Test-Path $uninstaller)) { exit 0 }
+          $process = Start-Process $uninstaller `
+            -ArgumentList @("/VERYSILENT", "/SUPPRESSMSGBOXES", "/NORESTART") `
+            -Wait -PassThru
+          if ($process.ExitCode -ne 0) { throw "Desinstalação falhou: $($process.ExitCode)." }
+          if (Test-Path (Join-Path $env:APP_DIR "TropaTranscribeLocal.exe")) {
+            throw "Executável permaneceu após desinstalação."
+          }
+      - name: Upload text evidence only
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: windows-installer-e2e-evidence-${{ github.run_id }}
+          path: |
+            ${{ runner.temp }}\tropa-e2e-evidence\**\*.txt
+            ${{ runner.temp }}\tropa-e2e-evidence\**\*.log
+            ${{ runner.temp }}\tropa-e2e-evidence\**\*.json
+            dist\manifest\*.json
+            dist\manifest\*.txt
+          if-no-files-found: warn
+          retention-days: 14
